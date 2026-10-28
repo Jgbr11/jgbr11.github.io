@@ -4,6 +4,9 @@ subtitulo: RPG roguelike para navegador
 resumo: RPG roguelike de turno em pixel art, publicado no itch.io, feito em JavaScript puro, com mais de 220 testes e simuladores que jogam centenas de partidas para balancear a dificuldade.
 ano: 2026
 ordem: 3
+capa: { src: /projetos/neon-burnout/titulo.webp, alt: "Tela de título do Neon Burnout, com a torre da SinergiaCorp em pixel art" }
+galeria:
+  - { src: /projetos/neon-burnout/combate.webp, alt: "Combate por turnos contra o Vendedor de Curso de Renda Extra" }
 stack: [JavaScript, HTML5, CSS, Node.js (testes), Pixel art]
 links:
   jogar: https://jgbr11.itch.io/neon-burnout

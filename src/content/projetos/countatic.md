@@ -4,6 +4,11 @@ subtitulo: análise de partidas de CS2
 resumo: Plataforma que descobre, baixa e analisa partidas de Counter-Strike 2 sozinha e transforma cada uma em estatísticas, percentis por faixa de rank e dicas.
 ano: 2026
 ordem: 1
+capa: { src: /projetos/countatic/partida.webp, alt: "Relatório de uma partida no CounTatic: placar, faixa de rank e dica de treino" }
+galeria:
+  - { src: /projetos/countatic/painel.webp, alt: "Painel do jogador com médias das últimas 20 partidas comparadas à faixa de rank" }
+  - { src: /projetos/countatic/partidas.webp, alt: "Histórico de partidas analisadas, com resultado, mapa, K/D e ADR" }
+  - { src: /projetos/countatic/entrada.webp, alt: "Página inicial do CounTatic com login pela Steam" }
 stack: [Java 21, Spring Boot 3, Go, Node.js, TypeScript, MySQL, Docker]
 links: {}
 numeros:

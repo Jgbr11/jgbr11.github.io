@@ -4,6 +4,9 @@ subtitulo: linha de produto para escalas de serviço
 resumo: Núcleo reutilizável de escalas de serviço, empacotado como JAR, e o primeiro produto da linha, o MilScale, que gera a escala diária de um batalhão.
 ano: 2026
 ordem: 2
+capa: { src: /projetos/smartscale/escala.webp, alt: "MilScale: geração da escala do mês com calendário de serviços" }
+galeria:
+  - { src: /projetos/smartscale/painel.webp, alt: "Painel do MilScale com o serviço do dia e indicadores do batalhão (dados de demonstração)" }
 stack: [Java 21, Spring Boot 3.3, Maven multi-módulo, Arquitetura hexagonal, React 19, Vite, TypeScript, Flyway, MySQL]
 links:
   codigo: https://github.com/Jgbr11/Sistema-SmartScale

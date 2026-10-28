@@ -4,6 +4,9 @@ subtitulo: gestão de gastos com dashboards
 resumo: Aplicação web full stack para registrar, categorizar e acompanhar gastos semanais e mensais, com login via JWT e dashboards interativos.
 ano: 2026
 ordem: 4
+capa: { src: /projetos/controle-financeiro/dashboard.webp, alt: "Dashboard do Controle Financeiro com totais da semana e do mês e gráficos por categoria" }
+galeria:
+  - { src: /projetos/controle-financeiro/mensal.webp, alt: "Lista de gastos do mês com categoria, valor e data (dados fictícios)" }
 stack: [Java, Spring Boot, Spring Security, JWT, Spring Data JPA, MySQL, Thymeleaf, Bootstrap 5, Chart.js]
 links:
   codigo: https://github.com/Jgbr11/controle-financeiro-java
