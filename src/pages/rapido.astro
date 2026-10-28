@@ -1,0 +1,100 @@
+---
+import Base from '../layouts/Base.astro';
+import '../styles/rapido.css';
+import { site } from '../content/site';
+import { carregarProjetos } from '../lib/projetos';
+import { Cracha } from '../components/comum/Cracha';
+import { Email } from '../components/comum/Email';
+
+const projetos = await carregarProjetos();
+---
+<Base titulo={`${site.nome} · ${site.titulo}`} descricao={site.descricaoSeo} caminho="/rapido/" jsonLd>
+  <a class="btn pular" href="#conteudo">Pular para o conteúdo</a>
+  <header class="r-abertura">
+    <div class="r-abertura__grade">
+      <div>
+        <p class="r-tag">// SYS.ONLINE — CURITIBA, PR</p>
+        <h1>João Guilherme<br />Cordeiro</h1>
+        <p class="r-funcao">&gt; {site.titulo}</p>
+        <nav class="r-botoes" aria-label="Links principais">
+          <a class="btn btn--escuro" href={site.curriculo}>CURRÍCULO.PDF</a>
+          <a class="btn btn--claro-contorno" href={site.contato.github} target="_blank" rel="noopener">GITHUB</a>
+          <a class="btn btn--claro-contorno" href={site.contato.linkedin} target="_blank" rel="noopener">LINKEDIN</a>
+          <a class="btn btn--claro-contorno" href="/">⌂ VOLTAR AO OS</a>
+        </nav>
+      </div>
+      <Cracha site={site} variante="compacto" />
+    </div>
+    <span class="r-abertura__marca" aria-hidden="true"></span>
+    <div class="faixa-alerta" aria-hidden="true"></div>
+  </header>
+
+  <main id="conteudo">
+    <section class="r-secao" aria-labelledby="t-sobre">
+      <h2 id="t-sobre" class="r-rotulo">[ 01 ] SOBRE</h2>
+      <p class="r-sobre">{site.sobre}</p>
+      <ul class="numeros">
+        {site.destaques.map((d) => <li><strong>{d.valor}</strong><span>{d.rotulo}</span></li>)}
+      </ul>
+    </section>
+
+    <section class="r-secao" aria-labelledby="t-projetos">
+      <h2 id="t-projetos" class="r-rotulo">[ 02 ] PROJETOS EM DESTAQUE</h2>
+      <div class="r-projetos">
+        {projetos.map((p) => (
+          <a class="r-projeto" href={`/projetos/${p.slug}/`}>
+            {p.capa
+              ? <img src={p.capa.src} alt={p.capa.alt} loading="lazy" />
+              : <div class="projeto-cab__capa projeto-cab__capa--vazia" aria-hidden="true"><span>{p.titulo}</span></div>}
+            <h3>{p.titulo}</h3>
+            <p>{p.resumo}</p>
+            <ul class="chips">{p.stack.slice(0, 4).map((s) => <li class="chip">{s}</li>)}</ul>
+            <span class="r-mais">ESTUDO DE CASO ▸</span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="r-secao" aria-labelledby="t-trajetoria">
+      <h2 id="t-trajetoria" class="r-rotulo">[ 03 ] TRAJETÓRIA</h2>
+      <ol class="linha-tempo">
+        {site.trajetoria.map((i) => (
+          <li>
+            <span class="linha-tempo__periodo">{i.periodo}</span>
+            <h3>{i.titulo}</h3>
+            <p class="linha-tempo__papel">{i.papel}</p>
+            <p>{i.descricao}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="r-secao" aria-labelledby="t-stack">
+      <h2 id="t-stack" class="r-rotulo">[ 04 ] STACK</h2>
+      <div class="r-stack">
+        {site.stack.map((g) => (
+          <div><h3>{g.grupo}</h3><ul class="chips">{g.itens.map((s) => <li class="chip">{s}</li>)}</ul></div>
+        ))}
+      </div>
+    </section>
+
+    <section class="r-secao" aria-labelledby="t-cert">
+      <h2 id="t-cert" class="r-rotulo">[ 05 ] CERTIFICADOS</h2>
+      <ul class="r-certificados">
+        {site.certificados.map((c) => (
+          <li><a href={c.verificacao} target="_blank" rel="noopener">{c.nome}</a> · {c.emissor}{c.ano && ` · ${c.ano}`}</li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="r-secao" aria-labelledby="t-contato">
+      <h2 id="t-contato" class="r-rotulo">[ 06 ] CONTATO</h2>
+      <div class="r-contato">
+        <Email client:idle site={site} />
+        <a class="btn btn--contorno" href={site.contato.linkedin} target="_blank" rel="noopener">LINKEDIN</a>
+        <a class="btn btn--contorno" href={site.contato.github} target="_blank" rel="noopener">GITHUB</a>
+      </div>
+    </section>
+  </main>
+  <footer class="r-rodape">JGBR11 OS · v1.0 · Curitiba, PR</footer>
+</Base>

@@ -1,0 +1,77 @@
+.corte { clip-path: var(--corte); }
+
+/* Botões e chips */
+.btn { display: inline-flex; align-items: center; gap: .4em; font-family: var(--fonte-mono); font-weight: 700; font-size: .78rem;
+  letter-spacing: .04em; padding: .6em 1em; background: var(--y); color: var(--k); text-decoration: none; clip-path: var(--corte-p); }
+.btn--contorno { background: transparent; color: var(--y); box-shadow: inset 0 0 0 1px var(--y); }
+.btn--escuro { background: var(--k); color: var(--y); }
+.btn--claro-contorno { background: transparent; color: var(--k); box-shadow: inset 0 0 0 2px var(--k); }
+.chips { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0; }
+.chip { font-family: var(--fonte-mono); font-size: .7rem; padding: 2px 8px; color: var(--c); border: 1px solid var(--c); }
+
+/* Faixa de alerta */
+.faixa-alerta { height: 12px; background: repeating-linear-gradient(-45deg, var(--k) 0 10px, transparent 10px 20px); }
+
+/* Crachá */
+.cracha { background: var(--k); color: var(--t); padding: 12px; box-shadow: var(--sombra-dura); }
+.cracha p { margin: 0; }
+.cracha__topo { display: flex; justify-content: space-between; margin: -12px -12px 12px !important; padding: 6px 12px;
+  background: var(--c); color: var(--k); font: 700 .62rem var(--fonte-mono); letter-spacing: .16em; }
+.cracha__foto { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; outline: 2px solid var(--y); outline-offset: 3px; margin-bottom: 14px; }
+.cracha__nome { font: 700 1.1rem/1.05 var(--fonte-titulo); text-transform: uppercase; color: #fff; }
+.cracha__funcao { font: 700 .7rem var(--fonte-mono); color: var(--y); margin: 4px 0 8px !important; }
+.cracha__dados { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 0; font-size: .74rem; }
+.cracha__dados dt { font: .6rem var(--fonte-mono); color: var(--t2); padding-top: 2px; }
+.cracha__dados dd { margin: 0; }
+.cracha__status { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px !important; padding: 3px 8px;
+  background: var(--y); color: var(--k); font: 700 .64rem var(--fonte-mono); }
+.cracha__status i { width: 7px; height: 7px; border-radius: 50%; background: #0b8f3a; }
+.cracha--widget { display: flex; gap: 12px; align-items: center; padding: 10px; border-top: 3px solid var(--y); }
+.cracha--widget .cracha__foto { width: 64px; height: 64px; margin: 0; flex: 0 0 auto; }
+.cracha--widget .cracha__nome { font-size: .85rem; }
+.cracha--widget .cracha__funcao { margin: 3px 0 0 !important; }
+
+/* Cabeçalho de projeto */
+.projeto-cab { display: grid; gap: 10px; }
+.projeto-cab__capa { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--k3); clip-path: var(--corte); }
+.projeto-cab__capa--vazia { display: grid; place-items: center; background: repeating-linear-gradient(-45deg, var(--k3) 0 14px, var(--k2) 14px 28px); }
+.projeto-cab__capa--vazia span { font: 700 1.6rem var(--fonte-titulo); text-transform: uppercase; color: var(--y); }
+.projeto-cab__titulo { color: var(--y); font-size: 1.6rem; text-shadow: 0 0 14px rgba(243, 230, 0, .25); }
+.projeto-cab__sub { font: .75rem var(--fonte-mono); color: var(--c); margin: 0; }
+.projeto-cab__resumo { margin: 0; }
+.projeto-cab__links { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 0; }
+.numeros { list-style: none; display: flex; flex-wrap: wrap; gap: 10px; padding: 0; margin: 0; }
+.numeros li { background: var(--k3); padding: 8px 12px; border-left: 3px solid var(--y); display: grid; }
+.numeros strong { font: 700 1.2rem var(--fonte-titulo); color: #fff; }
+.numeros span { font: .66rem var(--fonte-mono); color: var(--t2); }
+
+/* Corpo do estudo de caso (HTML vindo do Markdown) */
+.prosa { max-width: 72ch; }
+.prosa h2 { color: var(--y); font-size: 1.15rem; margin: 1.8em 0 .6em; }
+.prosa p, .prosa li { color: var(--t); }
+.prosa ul { padding-left: 1.2em; }
+.prosa li { margin-bottom: .5em; }
+.prosa strong { color: #fff; }
+.prosa code { font-family: var(--fonte-mono); font-size: .85em; color: var(--c); background: var(--k3); padding: 1px 5px; }
+.prosa a { color: var(--c); }
+
+/* Diagramas SVG dos estudos de caso */
+.diagrama { width: 100%; height: auto; background: var(--k); padding: 8px; margin: .5em 0 1em; }
+.diagrama .caixa { fill: var(--k2); stroke: var(--c); stroke-width: 1.5; }
+.diagrama .caixa-destaque { stroke: var(--y); stroke-width: 2; }
+.diagrama .limite { fill: none; stroke: var(--t2); stroke-dasharray: 5 5; }
+.diagrama .fio { stroke: var(--t2); stroke-width: 1.5; }
+.diagrama .ponta { fill: var(--t2); }
+.diagrama .nome { fill: #fff; font: 700 13px var(--fonte-mono); }
+.diagrama .rot { fill: var(--t2); font: 10px var(--fonte-mono); }
+
+.email { font-family: var(--fonte-mono); }
+
+/* Linha do tempo (modo rápido e app trajetoria/) */
+.linha-tempo { list-style: none; margin: 0; padding: 0 0 0 18px; border-left: 2px solid var(--y); }
+.linha-tempo li { position: relative; margin-bottom: 22px; }
+.linha-tempo li::before { content: ''; position: absolute; left: -25px; top: 5px; width: 12px; height: 12px; background: var(--y); }
+.linha-tempo__periodo { font: .74rem var(--fonte-mono); color: var(--c); }
+.linha-tempo h3 { font-family: var(--fonte-texto); text-transform: none; font-size: 1.05rem; margin: 2px 0; color: #fff; }
+.linha-tempo__papel { color: var(--y); font-size: .9rem; margin: 0; }
+.linha-tempo p:last-child { color: var(--t2); margin: 4px 0 0; font-size: .92rem; }

@@ -1,0 +1,16 @@
+---
+import Base from '../layouts/Base.astro';
+import '../styles/rapido.css';
+---
+<Base titulo="404 · JGBR11 OS" descricao="Página não encontrada." caminho="/404" semIndice>
+  <main class="erro404">
+    <p>ERRO 404</p>
+    <h1>Setor não encontrado</h1>
+    <p>// o endereço que você procurou não existe neste sistema.</p>
+    <p class="r-botoes" style="justify-content:center">
+      <a class="btn btn--escuro" href="/">⌂ VOLTAR AO OS</a>
+      <a class="btn btn--claro-contorno" href="/rapido/">⚡ MODO RÁPIDO</a>
+    </p>
+    <div class="faixa-alerta" aria-hidden="true"></div>
+  </main>
+</Base>

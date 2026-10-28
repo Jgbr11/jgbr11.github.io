@@ -1,0 +1,61 @@
+---
+import '@fontsource/chakra-petch/600.css';
+import '@fontsource/chakra-petch/700.css';
+import '@fontsource/space-grotesk/400.css';
+import '@fontsource/space-grotesk/500.css';
+import '@fontsource/space-grotesk/600.css';
+import '@fontsource/space-grotesk/700.css';
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/700.css';
+import '../styles/tokens.css';
+import '../styles/base.css';
+import '../styles/componentes.css';
+import { site } from '../content/site';
+
+interface Props { titulo: string; descricao: string; caminho: string; jsonLd?: boolean; semIndice?: boolean }
+const { titulo, descricao, caminho, jsonLd = false, semIndice = false } = Astro.props;
+const url = new URL(caminho, site.url).href;
+const imagem = new URL('/og-image.png', site.url).href;
+const pessoa = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: site.nomeCompleto,
+  jobTitle: site.titulo,
+  url: site.url,
+  image: new URL(site.foto, site.url).href,
+  sameAs: [site.contato.linkedin, site.contato.github],
+  knowsLanguage: ['pt-BR', 'en'],
+  address: { '@type': 'PostalAddress', addressLocality: 'Curitiba', addressRegion: 'PR', addressCountry: 'BR' },
+};
+---
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titulo}</title>
+    <meta name="description" content={descricao} />
+    <link rel="canonical" href={url} />
+    {semIndice && <meta name="robots" content="noindex" />}
+    <meta name="theme-color" content="#f3e600" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content={`${site.nome} · Portfólio`} />
+    <meta property="og:title" content={titulo} />
+    <meta property="og:description" content={descricao} />
+    <meta property="og:url" content={url} />
+    <meta property="og:image" content={imagem} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="627" />
+    <meta property="og:image:alt" content={`${site.nome} — ${site.titulo}`} />
+    <meta name="twitter:card" content="summary_large_image" />
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(pessoa)} />}
+    <script is:inline data-goatcounter="https://jgbr11.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+.superpowers/
+midia-original/
+test-results/
+playwright-report/
+.env
+lighthouse*.json
+docs/

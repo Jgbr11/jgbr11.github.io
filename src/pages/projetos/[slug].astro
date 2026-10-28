@@ -1,0 +1,34 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import '../../styles/rapido.css';
+import { site } from '../../content/site';
+import { CabecalhoProjeto } from '../../components/comum/CabecalhoProjeto';
+
+export async function getStaticPaths() {
+  const entradas = await getCollection('projetos');
+  return entradas.map((entrada) => ({ params: { slug: entrada.id }, props: { entrada } }));
+}
+
+const { entrada } = Astro.props;
+const { Content } = await render(entrada);
+const projeto = { slug: entrada.id, ...entrada.data, html: '' };
+---
+<Base titulo={`${projeto.titulo} · ${site.nome}`} descricao={projeto.resumo} caminho={`/projetos/${projeto.slug}/`}>
+  <nav class="p-barra" aria-label="Navegação">
+    <a href={`/#/projetos/${projeto.slug}`}>⌂ ABRIR NO JGBR11 OS</a>
+    <a href="/rapido/">⚡ MODO RÁPIDO</a>
+  </nav>
+  <main class="p-conteudo">
+    <CabecalhoProjeto projeto={projeto} nivel="h1" />
+    {projeto.galeria.length > 0 && (
+      <ul class="p-galeria">
+        {projeto.galeria.map((m) => (
+          <li><figure><img src={m.src} alt={m.alt} loading="lazy" /><figcaption>{m.alt}</figcaption></figure></li>
+        ))}
+      </ul>
+    )}
+    <article class="prosa"><Content /></article>
+  </main>
+  <footer class="r-rodape"><a href="/rapido/#t-projetos">← todos os projetos</a></footer>
+</Base>

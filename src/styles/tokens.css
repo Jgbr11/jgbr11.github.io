@@ -1,0 +1,10 @@
+:root {
+  --y: #f3e600; --k: #0d0d0d; --k2: #161616; --k3: #222222;
+  --c: #02d7f2; --b: #0a1f3a; --r: #ff3b4e; --t: #ececec; --t2: #a8a8a8;
+  --fonte-titulo: 'Chakra Petch', sans-serif;
+  --fonte-texto: 'Space Grotesk', sans-serif;
+  --fonte-mono: 'JetBrains Mono', monospace;
+  --corte: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  --corte-p: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%);
+  --sombra-dura: 8px 8px 0 rgba(13, 13, 13, .4);
+}

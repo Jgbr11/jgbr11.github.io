@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import '../styles/os.css';
+import OS from '../components/os/OS';
+import { site } from '../content/site';
+import { carregarProjetos } from '../lib/projetos';
+
+const dados = { site, projetos: await carregarProjetos() };
+---
+<Base titulo={`${site.nome} · ${site.titulo}`} descricao={site.descricaoSeo} caminho="/" jsonLd>
+  <h1 class="sr-only">JGBR11 OS: portfólio de {site.nome}, {site.titulo}</h1>
+  <OS client:only="react" dados={dados}>
+    <p slot="fallback" class="os-carregando os-carregando--fallback">CARREGANDO JGBR11 OS… <a href="/rapido/">abrir o modo rápido</a></p>
+  </OS>
+  <noscript>
+    <style>.os-carregando--fallback{display:none}</style>
+    <p class="os-carregando">Este sistema precisa de JavaScript. <a href="/rapido/">Abra o modo rápido</a>, que funciona sem ele.</p>
+  </noscript>
+</Base>

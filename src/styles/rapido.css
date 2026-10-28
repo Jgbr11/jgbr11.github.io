@@ -1,0 +1,48 @@
+.pular { position: absolute; left: 8px; top: -60px; z-index: 10; }
+.pular:focus { top: 8px; }
+
+.r-abertura { position: relative; background: var(--y); color: var(--k); padding: 48px 16px 64px; overflow: hidden; }
+.r-abertura__grade { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 230px; gap: 32px; align-items: center; }
+.r-abertura__marca { position: absolute; right: 12px; bottom: 6px; font: 700 clamp(4rem, 14vw, 9rem)/.85 var(--fonte-titulo);
+  color: rgba(13, 13, 13, .08); pointer-events: none; }
+.r-abertura__marca::before { content: "JGBR11"; }
+.r-tag { font: 700 .72rem var(--fonte-mono); letter-spacing: .14em; color: var(--b); margin: 0; }
+.r-abertura h1 { font-size: clamp(2.2rem, 7vw, 4rem); line-height: .95; margin: 10px 0 8px; color: var(--k); }
+.r-funcao { font: 700 1rem var(--fonte-mono); color: var(--b); margin: 0; }
+.r-botoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.r-abertura .faixa-alerta { position: absolute; left: 0; right: 0; bottom: 0; }
+
+.r-secao { max-width: 1100px; margin: 0 auto; padding: 48px 16px; }
+.r-rotulo { font: 700 .75rem var(--fonte-mono); letter-spacing: .14em; color: var(--y); margin: 0 0 18px; }
+.r-sobre { max-width: 72ch; font-size: 1.05rem; margin: 0 0 20px; }
+
+.r-projetos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.r-projeto { display: grid; gap: 8px; align-content: start; background: var(--k2); padding: 14px; border-top: 3px solid var(--y);
+  text-decoration: none; clip-path: var(--corte); transition: transform .15s; }
+.r-projeto:hover { transform: translateY(-3px); }
+.r-projeto img, .r-projeto .projeto-cab__capa--vazia { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.r-projeto h3 { color: #fff; font-size: 1.1rem; }
+.r-projeto p { margin: 0; font-size: .9rem; color: var(--t2); }
+.r-projeto .r-mais { font: 700 .72rem var(--fonte-mono); color: var(--y); }
+
+.r-stack { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.r-stack h3 { font-size: .85rem; color: #fff; margin-bottom: 8px; }
+.r-certificados { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.r-certificados a { color: var(--t); }
+.r-contato { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.r-rodape { text-align: center; padding: 24px 16px 40px; font: .72rem var(--fonte-mono); color: var(--t2); }
+
+.p-barra { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; background: var(--y); padding: 10px 16px; }
+.p-barra a { font: 700 .75rem var(--fonte-mono); color: var(--k); }
+.p-conteudo { max-width: 900px; margin: 0 auto; padding: 32px 16px 48px; }
+.p-galeria { display: grid; gap: 12px; margin: 20px 0 0; padding: 0; list-style: none; }
+.p-galeria figcaption { font: .72rem var(--fonte-mono); color: var(--t2); margin-top: 4px; }
+
+.erro404 { min-height: 100vh; display: grid; place-content: center; gap: 16px; text-align: center; background: var(--y); color: var(--k); padding: 16px; }
+.erro404 h1 { font-size: clamp(2rem, 8vw, 4rem); }
+.erro404 p { font: 700 .9rem var(--fonte-mono); margin: 0; }
+
+@media (max-width: 899px) {
+  .r-abertura__grade { grid-template-columns: 1fr; }
+  .r-abertura .cracha { max-width: 230px; order: -1; }
+}
