@@ -75,3 +75,7 @@
 .linha-tempo h3 { font-family: var(--fonte-texto); text-transform: none; font-size: 1.05rem; margin: 2px 0; color: #fff; }
 .linha-tempo__papel { color: var(--y); font-size: .9rem; margin: 0; }
 .linha-tempo p:last-child { color: var(--t2); margin: 4px 0 0; font-size: .92rem; }
+
+/* Galeria de prints dos projetos (modo rápido, páginas de projeto e janelas do OS) */
+.p-galeria figure { margin: 0; }
+.p-galeria img { width: 100%; background: var(--k3); }

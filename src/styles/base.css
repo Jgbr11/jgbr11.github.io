@@ -2,6 +2,7 @@
 html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--k); color: var(--t); font-family: var(--fonte-texto); line-height: 1.55; }
 img, svg, video, iframe { display: block; max-width: 100%; }
+img, video { height: auto; }
 a { color: inherit; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 h1, h2, h3, h4 { font-family: var(--fonte-titulo); text-transform: uppercase; line-height: 1.05; margin: 0; }

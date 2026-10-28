@@ -1,5 +1,6 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
+import { z } from 'astro/zod';
 
 const midia = z.object({ src: z.string(), alt: z.string() });
 
@@ -12,12 +13,12 @@ const projetos = defineCollection({
     ano: z.number(),
     ordem: z.number(),
     stack: z.array(z.string()),
-    links: z.object({ codigo: z.string().url().optional(), jogar: z.string().url().optional() }),
+    links: z.object({ codigo: z.url().optional(), jogar: z.url().optional() }),
     capa: midia.optional(),
     galeria: z.array(midia).default([]),
     numeros: z.array(z.object({ valor: z.string(), rotulo: z.string() })),
     equipe: z.string().optional(),
-    embedJogo: z.string().url().optional(),
+    embedJogo: z.url().optional(),
   }),
 });
 

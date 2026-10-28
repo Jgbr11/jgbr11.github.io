@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type SubmitEvent, type KeyboardEvent, type ReactNode } from 'react';
 import { completar, executar, prompt, type Pasta } from '../../../lib/os/terminal';
 import { Matrix } from './Matrix';
 import type { PropsApp } from './registro';
@@ -47,7 +47,7 @@ export function AppTerminal({ dados, abrir }: PropsApp) {
 
   const fimMatrix = useCallback(() => setMatrix(false), []);
 
-  const enviar = (e: FormEvent) => {
+  const enviar = (e: SubmitEvent) => {
     e.preventDefault();
     const comando = entrada;
     const novoHistorico = comando.trim() ? [...historico, comando.trim()] : historico;

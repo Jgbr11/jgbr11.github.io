@@ -44,7 +44,7 @@ const projetos = await carregarProjetos();
         {projetos.map((p) => (
           <a class="r-projeto" href={`/projetos/${p.slug}/`}>
             {p.capa
-              ? <img src={p.capa.src} alt={p.capa.alt} loading="lazy" />
+              ? <img src={p.capa.src} alt={p.capa.alt} width={p.capa.largura} height={p.capa.altura} loading="lazy" />
               : <div class="projeto-cab__capa projeto-cab__capa--vazia" aria-hidden="true"><span>{p.titulo}</span></div>}
             <h3>{p.titulo}</h3>
             <p>{p.resumo}</p>

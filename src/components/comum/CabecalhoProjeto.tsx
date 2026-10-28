@@ -5,7 +5,7 @@ export function CabecalhoProjeto({ projeto, nivel = 'h2' }: { projeto: Projeto; 
   return (
     <header className="projeto-cab">
       {projeto.capa ? (
-        <img className="projeto-cab__capa" src={projeto.capa.src} alt={projeto.capa.alt} loading="eager" decoding="async" />
+        <img className="projeto-cab__capa" src={projeto.capa.src} alt={projeto.capa.alt} width={projeto.capa.largura} height={projeto.capa.altura} loading="eager" decoding="async" />
       ) : (
         <div className="projeto-cab__capa projeto-cab__capa--vazia" aria-hidden="true">
           <span>{projeto.titulo}</span>

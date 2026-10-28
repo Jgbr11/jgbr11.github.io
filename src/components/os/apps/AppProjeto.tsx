@@ -1,4 +1,5 @@
 import { CabecalhoProjeto } from '../../comum/CabecalhoProjeto';
+import { GaleriaProjeto } from '../../comum/GaleriaProjeto';
 import type { PropsApp } from './registro';
 
 export function AppProjeto({ dados, param, abrir }: PropsApp) {
@@ -12,13 +13,7 @@ export function AppProjeto({ dados, param, abrir }: PropsApp) {
           <button type="button" className="btn" onClick={() => abrir({ app: 'neon-burnout' })}>▶ JOGAR AQUI</button>
         </p>
       )}
-      {projeto.galeria.length > 0 && (
-        <ul className="p-galeria">
-          {projeto.galeria.map((m) => (
-            <li key={m.src}><figure><img src={m.src} alt={m.alt} loading="lazy" /><figcaption>{m.alt}</figcaption></figure></li>
-          ))}
-        </ul>
-      )}
+      <GaleriaProjeto galeria={projeto.galeria} />
       <div className="prosa" dangerouslySetInnerHTML={{ __html: projeto.html }} />
       <p className="app-acoes"><a className="btn btn--contorno" href={`/projetos/${projeto.slug}/`}>PÁGINA DO PROJETO ↗</a></p>
     </div>

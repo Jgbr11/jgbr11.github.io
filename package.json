@@ -15,12 +15,12 @@
     "lighthouse": "node scripts/lighthouse.ts"
   },
   "dependencies": {
-    "@astrojs/react": "^4.4.2",
+    "@astrojs/react": "^7.1.2",
     "@astrojs/sitemap": "^3.7.4",
     "@fontsource/chakra-petch": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@fontsource/space-grotesk": "^5.3.0",
-    "astro": "^5.18.2",
+    "astro": "^7.4.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
@@ -30,9 +30,9 @@
     "@playwright/test": "^1.64.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "lighthouse": "^12.8.2",
+    "lighthouse": "^13.6.0",
     "sharp": "^0.35.5",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.7"
+    "vitest": "^5.0.5"
   }
 }

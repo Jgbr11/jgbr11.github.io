@@ -2,7 +2,8 @@ export interface ItemTrajetoria { periodo: string; titulo: string; papel: string
 export interface GrupoStack { grupo: string; itens: string[] }
 export interface Certificado { nome: string; emissor: string; ano?: string; verificacao: string }
 export interface Destaque { valor: string; rotulo: string }
-export interface Midia { src: string; alt: string }
+/** largura/altura são lidas do arquivo na compilação (carregarProjetos), para reservar o espaço da imagem. */
+export interface Midia { src: string; alt: string; largura?: number; altura?: number }
 export interface Numero { valor: string; rotulo: string }
 
 export interface Site {

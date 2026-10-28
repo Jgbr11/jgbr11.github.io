@@ -24,3 +24,15 @@ test('rota inexistente mostra a 404 do site', async ({ page }) => {
   await expect(page.getByText('SETOR NÃO ENCONTRADO')).toBeVisible();
   await expect(page.getByRole('link', { name: /MODO RÁPIDO/ })).toHaveAttribute('href', '/rapido/');
 });
+
+test('imagens de projeto declaram largura e altura (evita salto de layout)', async ({ page }) => {
+  for (const url of ['/projetos/countatic/', '/projetos/neon-burnout/', '/rapido/']) {
+    await page.goto(url);
+    const imagens = page.locator('main img');
+    expect(await imagens.count()).toBeGreaterThan(0);
+    for (const img of await imagens.all()) {
+      await expect(img).toHaveAttribute('width', /^[1-9]\d*$/);
+      await expect(img).toHaveAttribute('height', /^[1-9]\d*$/);
+    }
+  }
+});
