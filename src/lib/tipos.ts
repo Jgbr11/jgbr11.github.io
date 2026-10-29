@@ -21,7 +21,7 @@ export interface Site {
 export interface Projeto {
   slug: string; titulo: string; subtitulo: string; resumo: string; ano: number; ordem: number;
   stack: string[];
-  links: { codigo?: string; jogar?: string };
+  links: { codigo?: string; jogar?: string; demo?: string };
   capa?: Midia; galeria: Midia[]; numeros: Numero[];
   equipe?: string; embedJogo?: string;
   /** HTML do corpo Markdown, já renderizado pelo Astro */

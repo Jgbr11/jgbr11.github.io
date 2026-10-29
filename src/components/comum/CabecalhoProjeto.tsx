@@ -23,6 +23,7 @@ export function CabecalhoProjeto({ projeto, nivel = 'h2' }: { projeto: Projeto; 
         {projeto.stack.map((s) => <li key={s} className="chip">{s}</li>)}
       </ul>
       <p className="projeto-cab__links">
+        {projeto.links.demo && <a className="btn" href={projeto.links.demo} target="_blank" rel="noopener">▶ ABRIR DEMO AO VIVO</a>}
         {projeto.links.jogar && <a className="btn" href={projeto.links.jogar} target="_blank" rel="noopener">JOGAR NO ITCH.IO ▸</a>}
         {projeto.links.codigo && <a className="btn btn--contorno" href={projeto.links.codigo} target="_blank" rel="noopener">CÓDIGO</a>}
       </p>

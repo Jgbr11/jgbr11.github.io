@@ -13,7 +13,7 @@ const projetos = defineCollection({
     ano: z.number(),
     ordem: z.number(),
     stack: z.array(z.string()),
-    links: z.object({ codigo: z.url().optional(), jogar: z.url().optional() }),
+    links: z.object({ codigo: z.url().optional(), jogar: z.url().optional(), demo: z.string().startsWith('/').optional() }),
     capa: midia.optional(),
     galeria: z.array(midia).default([]),
     numeros: z.array(z.object({ valor: z.string(), rotulo: z.string() })),

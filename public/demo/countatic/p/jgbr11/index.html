@@ -1,0 +1,2518 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><script>(function(){var caminho=function caminhoDaApi(url        )         {
+  const base = '/demo/countatic';
+  const i = url.indexOf('?');
+  const caminho = i < 0 ? url : url.slice(0, i);
+  const query = i < 0 ? '' : url.slice(i + 1);
+  const partes = query === '' ? [] : query.split('&').sort();
+  return base + caminho + (partes.length ? '__' + partes.join('&') : '') + '.json';
+};var f=window.fetch;window.fetch=function(e,i){var u=typeof e==='string'?e:(typeof URL!=='undefined'&&e instanceof URL)?e.href:(e&&e.url)||'';var o=window.location&&window.location.origin;if(o&&u.indexOf(o)===0)u=u.slice(o.length);if(u.indexOf('/api/')===0)return f.call(window,caminho(u),i);return f.apply(window,arguments)}})();</script><style>a[href$="/login"]{display:none!important}.demo-faixa{position:relative;z-index:6;background:#f3e600;color:#0d0d0d;font:600 14px/1.4 system-ui,sans-serif;text-align:center;padding:8px 16px}</style>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0A0714">
+
+  <title>Painel do Jogador — CounTatic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap">
+
+  <style>
+            /* ───────────────────────────────────────────────────────────
+               TOKENS
+               Uma única fonte de verdade para cor, fonte e geometria.
+               ─────────────────────────────────────────────────────────── */
+            :root{
+              color-scheme:dark;
+
+              --bg:#0A0714;
+              --panel-1:#120B24;
+              --panel-2:#170F2E;
+
+              --neon:#B026FF;
+              --neon-dim:#6B2FA0;
+
+              /* Times: as cores do próprio CS2. Um placar de CS em que o CT não
+                 é azul e o TR não é amarelo obriga o jogador a ler o rótulo
+                 para saber de quem é o número — a cor tem que dizer isso
+                 sozinha, como diz dentro do jogo. */
+              --ct:#6F9FD8;
+              --tr:#E9B44C;
+
+              /* Estados: verde positivo, vermelho negativo.
+                 Verde e vermelho é o par MENOS distinguível para daltonismo
+                 do tipo protan/deutan, que é o mais comum. Por isso nenhum
+                 indicador desta interface depende só da cor: todo lugar que
+                 usa --good/--bad carrega junto um sinal de forma (▲ ▼) e o
+                 número continua legível por si. A cor acelera a leitura de
+                 quem enxerga a diferença; ela nunca é a única portadora. */
+              --good:#2BE08A;
+              --bad:#FF4D6A;
+
+              /* Ciano fica reservado ao anel de foco — afordância de
+                 interface, não estado. Misturá-lo com os estados faria "está
+                 focado" parecer "está bom". */
+              --focus:#00F0FF;
+
+              --text:#E8E3F5;
+              --muted:#8B7FA8;
+
+              --line:rgba(176,38,255,.25);
+              --tint:rgba(176,38,255,.06);
+
+              /* Tamanho do chanfro. Trocar aqui muda a linguagem da tela toda. */
+              --cut:10px;
+
+              --f-display:'Orbitron','Eurostile','Arial Narrow',system-ui,sans-serif;
+              --f-body:'Rajdhani','Segoe UI',system-ui,-apple-system,sans-serif;
+              --f-mono:'Share Tech Mono','JetBrains Mono',ui-monospace,Consolas,monospace;
+            }
+
+            *,*::before,*::after{box-sizing:border-box}
+
+            body{
+              margin:0;
+              min-height:100vh;
+background:var(--bg);
+              color:var(--text);
+              font:400 16px/1.6 var(--f-body);
+              -webkit-font-smoothing:antialiased;
+            }
+
+            /* ───────────────────────────────────────────────────────────
+               FUNDO
+               Duas camadas fixas, ambas inertes ao ponteiro: a grade dá a
+               sensação de instrumento, as scanlines dão a de tela CRT.
+               Ficam em position:fixed para não rolarem com o conteúdo — uma
+               grade que rola vira textura e perde o efeito de "painel".
+               ─────────────────────────────────────────────────────────── */
+            body::before{
+              content:"";
+              position:fixed;
+              inset:0;
+              z-index:0;
+              pointer-events:none;
+              background-image:
+                linear-gradient(to right, rgba(176,38,255,.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(176,38,255,.05) 1px, transparent 1px);
+              background-size:40px 40px;
+            }
+
+            body::after{
+              content:"";
+              position:fixed;
+              inset:0;
+              z-index:1;
+              pointer-events:none;
+              opacity:.35;
+              background:repeating-linear-gradient(
+                to bottom,
+                rgba(0,0,0,.18) 0 1px,
+                transparent 1px 3px
+              );
+              animation:hud-flicker 7s steps(1) infinite;
+            }
+
+            /* O flicker é quase imperceptível de propósito: a HUD deve parecer
+               viva, não com defeito. Passa 96% do ciclo parada. */
+            @keyframes hud-flicker{
+              0%,96%,100%{opacity:.35}
+              97%{opacity:.5}
+              98%{opacity:.28}
+              99%{opacity:.44}
+            }
+
+            /* ───────────────────────────────────────────────────────────
+               NAVEGAÇÃO
+               Fixa no topo: numa página longa de estatística, a saída não
+               pode exigir rolar até o começo. Fundo opaco porque ela passa
+               por cima do conteúdo.
+               ─────────────────────────────────────────────────────────── */
+            .nav{
+              position:sticky;top:0;z-index:5;
+              background:rgba(10,7,20,.92);
+              backdrop-filter:blur(6px);
+              border-bottom:1px solid var(--line);
+            }
+            .nav-in{max-width:1140px;margin:0 auto;padding:.7rem 1rem;
+                    display:flex;align-items:center;gap:1.25rem}
+
+            .nav-marca{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.22em;
+                       text-transform:uppercase;color:var(--neon);text-decoration:none}
+            a.nav-marca:hover{text-shadow:0 0 12px rgba(176,38,255,.55)}
+
+            .nav-links{display:flex;gap:.25rem;margin-left:auto;flex-wrap:wrap}
+            .nav-links a{
+              font-family:var(--f-body);font-size:.72rem;font-weight:600;
+              letter-spacing:.12em;text-transform:uppercase;
+              color:var(--muted);text-decoration:none;
+              padding:.4rem .7rem;
+              border:1px solid transparent;
+            }
+            .nav-links a:hover{color:var(--text);border-color:var(--line)}
+            /* O estado ativo se apoia no aria-current, não numa classe: assim
+               o visual e o leitor de tela não podem divergir. */
+            /* Atalho de volta: cor da marca e sem margem à esquerda, para
+               ler como "sair daqui" e não como mais um destino da lista. */
+            .nav-links a.nav-volta{color:var(--neon);border-color:var(--line);
+                                   margin-right:.5rem}
+            .nav-links a.nav-volta:hover{background:var(--tint)}
+
+            .nav-links a[aria-current="page"]{
+              color:var(--neon);border-color:var(--line);background:var(--tint)}
+
+            /* Todo conteúdo sobe acima das duas camadas de fundo. */
+            .wrap{position:relative;z-index:2;max-width:1140px;margin:0 auto;
+                  padding:2rem 1rem 4rem}
+
+            /* ───────────────────────────────────────────────────────────
+               TIPOGRAFIA
+               ─────────────────────────────────────────────────────────── */
+            h1,h2,h3{font-family:var(--f-display);font-weight:700;margin:0}
+            h1{font-size:clamp(1.6rem,4vw,2.3rem);font-weight:900;
+               letter-spacing:.06em;text-transform:uppercase;line-height:1.15}
+            h2{font-size:.82rem;letter-spacing:.18em;text-transform:uppercase;
+               color:var(--muted);font-weight:700}
+            h3{font-size:.9rem;letter-spacing:.12em;text-transform:uppercase;
+               color:var(--neon);font-weight:700}
+
+            .label{font-family:var(--f-body);font-size:.72rem;font-weight:600;
+                   letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+            .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+            /* Tags de metadado do cabeçalho. Usadas pela página da partida e
+               pelo painel do jogador — por isso vivem aqui e não numa delas. */
+            .meta{display:flex;flex-wrap:wrap;gap:.4rem .55rem;margin-top:.85rem}
+            .meta .tag{font-family:var(--f-mono);font-size:.74rem;
+                       letter-spacing:.06em;color:var(--muted);
+                       background:var(--tint);border:1px solid var(--line);
+                       padding:.2rem .55rem}
+            .meta .tag b{color:var(--text);font-weight:400}
+
+            /* ───────────────────────────────────────────────────────────
+               GEOMETRIA — canto cortado
+               O clip-path corta a borda junto com o fundo, então um único
+               elemento com `border` perderia a linha justamente na diagonal.
+               A solução é de duas camadas: a externa É a borda (1px de
+               padding pintado com a cor da linha) e a interna é o
+               preenchimento. As duas usam o mesmo recorte.
+               ─────────────────────────────────────────────────────────── */
+            .cut,.cut-in{
+              clip-path:polygon(
+                var(--cut) 0,
+                100% 0,
+                100% calc(100% - var(--cut)),
+                calc(100% - var(--cut)) 100%,
+                0 100%,
+                0 var(--cut)
+              );
+            }
+
+            /* ───────────────────────────────────────────────────────────
+               PAINEL
+               ─────────────────────────────────────────────────────────── */
+            .panel{
+              background:var(--line);
+              padding:1px;
+              margin-bottom:1.25rem;
+            }
+            .panel > .cut-in{
+              background:linear-gradient(160deg,var(--panel-1),var(--panel-2));
+              padding:1.25rem 1.35rem;
+            }
+            .panel-head{display:flex;align-items:center;gap:.6rem;margin-bottom:1.1rem}
+            /* O filete entra ANTES de qualquer ação, empurrando-a para a
+               direita — daí o ::after ser irmão e não o último elemento. */
+            .panel-head::after{content:"";flex:1;height:1px;background:var(--line);order:1}
+
+            /* ───────────────────────────────────────────────────────────
+               METRIC CARD
+               O fundo é quase transparente de propósito. A versão anterior
+               preenchia cada card com roxo, e vinte cards preenchidos lado a
+               lado viravam uma parede: o olho não achava onde pousar. Aqui o
+               peso visual está no NÚMERO, não na caixa — a caixa é só a linha
+               de 1px que delimita.
+               ─────────────────────────────────────────────────────────── */
+            .chips{display:grid;gap:.7rem;
+                   grid-template-columns:repeat(auto-fill,minmax(178px,1fr))}
+
+            .chip{--st:var(--text);--st-glow:rgba(232,227,245,.35);
+                  background:var(--line);padding:1px}
+            .chip > .cut-in{background:rgba(255,255,255,.02);padding:.75rem .85rem}
+
+            /* O rótulo é secundário ao número, mas não pode ser ilegível:
+               a .66rem em maiúsculas com espaçamento, o roxo apagado ficava
+               no limite do contraste mínimo para texto pequeno. Um pouco
+               maior, mais pesado e mais claro resolve sem competir com o
+               valor, que segue sendo o elemento de peso do card. */
+            .chip .k{display:flex;align-items:center;gap:.4rem;
+                     font-size:.7rem;font-weight:700;letter-spacing:.12em;
+                     text-transform:uppercase;color:#A99CC6;
+                     margin-bottom:.45rem;line-height:1.3}
+            .chip .k .ico{flex:0 0 auto;opacity:.75}
+
+            /* A cor do valor É o status. O glow acompanha a mesma variável,
+               senão um número vermelho ganharia halo roxo. */
+            .chip .v{font-family:var(--f-display);font-weight:700;font-size:1.45rem;
+                     letter-spacing:.02em;color:var(--st)}
+            .chip.is-acima  {--st:var(--good);--st-glow:rgba(43,224,138,.45)}
+            .chip.is-abaixo {--st:var(--bad); --st-glow:rgba(255,77,106,.45)}
+
+            /* Recorde pessoal: apenas o CONTORNO dourado, com um brilho leve.
+               Tingir o bloco inteiro competia com o número, que é o dado — a
+               moldura destaca sem tomar a atenção.
+
+               O fundo do .chip É a borda de 1px (técnica de duas camadas),
+               então é ele que recebe o dourado; a camada interna fica como
+               nos demais cards.
+
+               O brilho usa drop-shadow, e não box-shadow: o card é recortado
+               por clip-path, e clip-path corta a box-shadow junto — o brilho
+               simplesmente não apareceria. O filter é aplicado DEPOIS do
+               recorte, então a luz acompanha o contorno chanfrado. */
+            .chip.is-recorde{background:#FFC53D;
+                             filter:drop-shadow(0 0 8px rgba(255,197,61,.45))}
+
+            /* A camada interna precisa ser OPACA aqui.
+               Nos demais cards ela é rgba(255,255,255,.02) — quase
+               transparente — e deixa a cor de trás atravessar. Com o roxo
+               translúcido da borda isso passa despercebido; com o dourado
+               sólido, o card inteiro fica amarelo em vez de só o contorno.
+               A cor sólida abaixo é a média do gradiente do painel, então o
+               card continua idêntico aos outros por dentro. */
+            .chip.is-recorde > .cut-in{
+              background:linear-gradient(rgba(255,255,255,.02),rgba(255,255,255,.02)),#150E2A;
+            }
+
+            .chip .pr{margin-left:.4rem;font-size:.75em;cursor:help;vertical-align:middle}
+
+            /* ─── Hierarquia ───────────────────────────────────────────
+               Nem toda métrica pesa igual. K/D e ADR decidem a leitura da
+               partida; "disparos avaliados" é diagnóstico. Dar o mesmo
+               tamanho aos dois obriga o jogador a filtrar no olho. O card
+               principal ocupa duas colunas, cresce a tipografia e é o único
+               que recebe glow — que é o que sobrou de destaque depois de o
+               fundo virar transparente. */
+            .chip.is-principal{grid-column:span 2}
+            .chip.is-principal > .cut-in{padding:.95rem 1.05rem}
+            .chip.is-principal .v{font-size:2.1rem;font-weight:900;
+                                  text-shadow:0 0 18px var(--st-glow)}
+            .chip.is-principal .k{font-size:.75rem}
+
+            /* Numa coluna só, "span 2" estouraria a grade. */
+            @media (max-width:420px){
+              .chip.is-principal{grid-column:span 1}
+              .chip.is-principal .v{font-size:1.7rem}
+            }
+
+            /* ─── Tooltip ──────────────────────────────────────────────
+               Métrica com explicação ganha uma marca discreta e usa o
+               title nativo: sem JS de posicionamento, e funciona por
+               teclado e leitor de tela sem trabalho extra. */
+            .chip .k[title]{cursor:help}
+            .chip .k[title]::after{content:"?";margin-left:auto;
+                                   font-size:.62rem;opacity:.5;
+                                   border:1px solid currentColor;border-radius:50%;
+                                   width:1.1em;height:1.1em;line-height:1;
+                                   display:inline-flex;align-items:center;
+                                   justify-content:center;flex:0 0 auto}
+
+            /* ───────────────────────────────────────────────────────────
+               BADGE DE RANK
+               Circular, anel neon, pulsação lenta. É a única forma redonda
+               da interface — por isso chama atenção sem precisar de tamanho.
+
+               A cor NÃO é a da marca: é a da faixa do Premier. Um jogador
+               Azul que visse um anel roxo teria de ler o número para saber
+               onde está, e o badge existe justamente para dispensar isso.
+               As sete faixas abaixo são as mesmas do enum RankTier.
+               O rgba de cada uma vem escrito à mão em vez de derivado por
+               color-mix, para não depender de suporte do navegador num
+               elemento que é a identidade da tela.
+               ─────────────────────────────────────────────────────────── */
+            .badge{
+              --tier:var(--neon);
+              --tier-glow:rgba(176,38,255,.55);
+              --tier-soft:rgba(176,38,255,.18);
+
+              display:grid;
+              place-items:center;
+              width:96px;height:96px;
+              flex:0 0 auto;
+              border-radius:50%;
+              background:radial-gradient(circle at 50% 45%,
+                         var(--tier-soft), transparent 72%);
+              border:2px solid var(--tier);
+              animation:hud-pulse 2.6s ease-in-out infinite;
+              text-align:center;
+            }
+            .badge .n{font-family:var(--f-display);font-weight:900;font-size:1.5rem;
+                      letter-spacing:.01em;line-height:1;color:var(--tier);
+                      text-shadow:0 0 14px var(--tier-glow)}
+            .badge .t{font-family:var(--f-body);font-size:.62rem;font-weight:700;
+                      letter-spacing:.14em;text-transform:uppercase;
+                      color:var(--tier);margin-top:.3rem;opacity:.9}
+
+            /* ───────────────────────────────────────────────────────────
+               CORES DAS FAIXAS
+               Genéricas de propósito: qualquer elemento que exiba a faixa
+               recebe a classe e passa a falar a mesma cor. Antes isso vivia
+               preso ao badge, e o rótulo "Azul" aparecia roxo em todo o resto
+               da interface — o oposto do que a faixa comunica.
+
+               Vêm DEPOIS do .badge para vencer o padrão dele por ordem de
+               declaração (mesma especificidade).
+               ─────────────────────────────────────────────────────────── */
+            .t-cinza      {--tier:#B6BECC;--tier-glow:rgba(182,190,204,.55);--tier-soft:rgba(182,190,204,.18)}
+            .t-azul-claro {--tier:#6FD3F2;--tier-glow:rgba(111,211,242,.55);--tier-soft:rgba(111,211,242,.18)}
+            .t-azul       {--tier:#5B8DEF;--tier-glow:rgba(91,141,239,.60); --tier-soft:rgba(91,141,239,.20)}
+            .t-roxo       {--tier:#B026FF;--tier-glow:rgba(176,38,255,.55); --tier-soft:rgba(176,38,255,.18)}
+            .t-rosa       {--tier:#FF57C1;--tier-glow:rgba(255,87,193,.55); --tier-soft:rgba(255,87,193,.18)}
+            .t-vermelho   {--tier:#FF4D4D;--tier-glow:rgba(255,77,77,.55);  --tier-soft:rgba(255,77,77,.18)}
+            .t-ouro       {--tier:#FFC53D;--tier-glow:rgba(255,197,61,.60); --tier-soft:rgba(255,197,61,.20)}
+
+            /* Chip com o nome da faixa. O fallback para --neon cobre o caso de
+               não sabermos a faixa: melhor a cor da marca que nenhuma. */
+            .tier{display:inline-block;font-family:var(--f-mono);font-size:.72rem;
+                  letter-spacing:.08em;
+                  color:var(--tier,var(--neon));
+                  background:var(--tier-soft,var(--tint));
+                  border:1px solid var(--tier,var(--line));
+                  padding:.15rem .5rem}
+
+            /* Tag de metadado que carrega a faixa: só o valor ganha a cor, o
+               rótulo "Faixa" continua apagado como as demais tags. */
+            .meta .tag.is-tier b{color:var(--tier,var(--text))}
+            .meta .tag.is-tier{border-color:var(--tier,var(--line))}
+
+            /* O pulso usa a cor da faixa, não a da marca. */
+            @keyframes hud-pulse{
+              0%,100%{box-shadow:0 0 10px var(--tier-soft), inset 0 0 10px var(--tier-soft)}
+              50%    {box-shadow:0 0 24px var(--tier-glow), inset 0 0 14px var(--tier-soft)}
+            }
+
+            /* ───────────────────────────────────────────────────────────
+               BARRA DE PROGRESSO
+               Trilho escuro translúcido; preenchimento em gradiente com um
+               glow leve. A cor do preenchimento é decidida por quem usa,
+               porque aqui ela carrega significado (ver .is-up / .is-down).
+               ─────────────────────────────────────────────────────────── */
+            .bar{position:relative;height:6px;background:rgba(0,0,0,.45);
+                 border:1px solid var(--line);overflow:hidden}
+            .bar > i{position:absolute;inset:0 auto 0 0;display:block;
+                     background:linear-gradient(90deg,var(--neon-dim),var(--neon));
+                     box-shadow:0 0 10px rgba(176,38,255,.5)}
+            .bar > i.is-up{background:linear-gradient(90deg,#147852,var(--good));
+                           box-shadow:0 0 10px rgba(43,224,138,.45)}
+            .bar > i.is-down{background:linear-gradient(90deg,#8f2036,var(--bad));
+                             box-shadow:0 0 10px rgba(255,77,106,.45)}
+
+            /* ───────────────────────────────────────────────────────────
+               ITEM DE LISTA
+               Barra vertical fina à esquerda indicando o status do item.
+               ─────────────────────────────────────────────────────────── */
+            .items{list-style:none;padding:0;margin:0}
+            .items li{
+              position:relative;
+              background:var(--tint);
+              border:1px solid var(--line);
+              border-left:2px solid var(--neon);
+              padding:.65rem .85rem;
+              margin-bottom:.5rem;
+              font-size:.95rem;
+            }
+            .items li.is-up{border-left-color:var(--good)}
+            .items li.is-down{border-left-color:var(--bad)}
+
+            .note{background:var(--tint);border:1px solid var(--line);
+                  border-left:2px solid var(--neon-dim);
+                  padding:.7rem .85rem;font-size:.92rem;color:var(--muted)}
+
+            /* ───────────────────────────────────────────────────────────
+               TREND CHART
+               Sem grade: a única horizontal é a média da própria série.
+               O SVG estica na largura e trava a altura, entao o grafico
+               acompanha a coluna sem recalcular nada em JS.
+               ─────────────────────────────────────────────────────────── */
+            .trend{margin-top:.4rem}
+            .trend-plot{position:relative}
+            .trend svg{width:100%;height:170px;display:block;overflow:visible}
+            .trend-head{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;
+                        margin-bottom:.3rem;font-size:.85rem}
+
+            /* Rótulos do eixo X. font-size em px porque o viewBox tem escala
+               própria: em rem eles cresceriam junto com o estica do SVG. */
+            .trend .eixo{fill:var(--muted);font-family:var(--f-mono);font-size:11px}
+
+            /* Ponto do gráfico. O raio cresce no hover/foco para o alvo ficar
+               maior que o desenho — 4px de raio é pouco para o dedo. */
+            .trend .tp{cursor:pointer;transition:r .12s}
+            .trend .tp:hover,.trend .tp:focus-visible{r:7}
+            .trend .gap line{pointer-events:none}
+
+            /* Tooltip. Posicionado em % pelo JS e centrado por translate, então
+               acompanha o SVG em qualquer largura. */
+            .tip{
+              position:absolute;
+              bottom:calc(100% - 12px);
+              transform:translateX(-50%);
+              display:flex;flex-direction:column;gap:.15rem;
+              min-width:9rem;
+              padding:.5rem .65rem;
+              background:var(--panel-1);
+              border:1px solid var(--neon-dim);
+              box-shadow:0 0 18px rgba(0,0,0,.6);
+              font-size:.78rem;line-height:1.35;
+              pointer-events:none;
+              z-index:4;
+            }
+            .tip b{font-family:var(--f-display);font-size:1.05rem}
+            .tip[hidden]{display:none}
+            .trend-label{font-family:var(--f-body);font-weight:600;
+                         letter-spacing:.1em;text-transform:uppercase;font-size:.72rem}
+            .trend-foot{display:flex;justify-content:space-between;
+                        font-size:.7rem;margin-top:.2rem}
+            /* Legenda da faixa na cor da faixa, casando com a linha tracejada. */
+            .trend-faixa{color:var(--tier,var(--muted))}
+
+            /* Botões de métrica: o .btn já existia no vocabulário e não tinha
+               tela usando. O ativo é marcado por aria-pressed, que dá o estado
+               ao leitor de tela em vez de só pintar. */
+            .trend-tabs{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.9rem}
+            .trend-tabs .btn{padding:.35rem .8rem;font-size:.72rem}
+            .trend-tabs .btn[aria-pressed="true"]{
+              border-color:var(--neon);
+              background:rgba(176,38,255,.16);
+              box-shadow:0 0 12px rgba(176,38,255,.35);
+            }
+
+            /* ───────────────────────────────────────────────────────────
+               COACH PANEL
+               Feedback consolidado, ordenado por gravidade. A cor da barra
+               lateral e a do ícone vêm da mesma variável --sev, então trocar
+               a gravidade de um item não exige mexer em dois lugares.
+               ─────────────────────────────────────────────────────────── */
+            .coach{list-style:none;padding:0;margin:0}
+            .coach-item{
+              --sev:var(--muted);
+              display:flex;
+              align-items:flex-start;
+              gap:.7rem;
+              padding:.75rem .9rem;
+              margin-bottom:.5rem;
+              background:rgba(255,255,255,.02);
+              border:1px solid var(--line);
+              border-left:2px solid var(--sev);
+            }
+            .coach-item.is-aviso  {--sev:var(--bad)}
+            .coach-item.is-sucesso{--sev:var(--good)}
+            .coach-item.is-info   {--sev:var(--neon-dim)}
+
+            /* O ícone é o único elemento colorido pela gravidade. O texto fica
+               em --text: dica é bloco de leitura, e neon em texto longo cansa. */
+            .coach-item .ico{color:var(--sev);flex:0 0 auto;margin-top:.15rem}
+            .coach-txt{min-width:0}
+            .coach-txt p{margin:0;font-size:.95rem;line-height:1.5}
+            .coach-meta{display:block;margin-top:.3rem;
+                        font-size:.68rem;font-weight:600;letter-spacing:.12em;
+                        text-transform:uppercase;color:var(--muted)}
+
+            /* Banner do alerta mais grave, no topo da página. Um só — dois
+               deixam de ser destaque e viram parede. */
+            .coach-banner{
+              display:flex;align-items:flex-start;gap:.75rem;
+              margin-bottom:1.25rem;padding:.85rem 1rem;
+              background:rgba(255,77,106,.07);
+              border:1px solid var(--line);
+              border-left:3px solid var(--bad);
+            }
+            .coach-banner .ico{color:var(--bad);flex:0 0 auto;margin-top:.1rem}
+            .coach-banner p{margin:0;font-size:.95rem;line-height:1.45}
+            .coach-banner a{display:inline-block;margin-top:.35rem;
+                            font-size:.72rem;font-weight:600;letter-spacing:.1em;
+                            text-transform:uppercase;color:var(--neon)}
+
+            /* ───────────────────────────────────────────────────────────
+               DESTAQUES DE RODADA
+               O número do round fica à esquerda, grande, porque é por ele que
+               a pessoa reencontra o momento na demo. O primeiro colocado é o
+               único destacado: três realces lado a lado deixam de destacar.
+               ─────────────────────────────────────────────────────────── */
+            .hl{list-style:none;padding:0;margin:0;display:grid;gap:.5rem}
+            .hl-item{
+              --hl:var(--line);
+              display:flex;align-items:center;gap:.9rem;
+              padding:.7rem .9rem;
+              background:rgba(255,255,255,.02);
+              border:1px solid var(--hl);
+            }
+            .hl-item.is-topo{
+              --hl:var(--neon);
+              background:rgba(176,38,255,.07);
+            }
+            .hl-round{
+              flex:0 0 auto;min-width:3.1rem;text-align:center;
+              font-family:var(--f-mono);font-size:.62rem;letter-spacing:.14em;
+              text-transform:uppercase;color:var(--muted);line-height:1.25
+            }
+            .hl-round b{display:block;font-family:var(--f-display);font-weight:900;
+                        font-size:1.35rem;letter-spacing:0;color:var(--text)}
+            .hl-item.is-topo .hl-round b{color:var(--neon)}
+            .hl-corpo{min-width:0;flex:1 1 auto}
+            .hl-titulo{font-family:var(--f-display);font-weight:700;
+                       font-size:.95rem;letter-spacing:.02em}
+            .hl-desc{margin:.2rem 0 0;font-size:.86rem;line-height:1.45;
+                     color:var(--muted)}
+
+            /* A pontuação é o critério da ordem: escondê-la deixaria "por que
+               este round e não aquele" sem resposta na tela. */
+            .hl-pts{flex:0 0 auto;text-align:right;font-family:var(--f-mono);
+                    font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;
+                    color:var(--muted);line-height:1.3}
+            .hl-pts b{display:block;font-family:var(--f-display);font-weight:700;
+                      font-size:1rem;letter-spacing:0;color:var(--text)}
+
+            /* Perdeu o round: o feito continua valendo, mas não é vitória.
+               A barra à esquerda diz isso sem tingir o bloco inteiro. */
+            .hl-item.is-perdido{box-shadow:inset 3px 0 0 var(--bad)}
+            .hl-item.is-ganho  {box-shadow:inset 3px 0 0 var(--good)}
+
+            /* ───────────────────────────────────────────────────────────
+               RADAR
+               Largura fixa e encolhível: o losango precisa de espaço para os
+               rótulos, e espremê-lo mais que isso os faz colidir.
+               ─────────────────────────────────────────────────────────── */
+            .radar{flex:0 0 auto;width:min(300px,100%)}
+            /* Sem overflow:visible. O viewBox já reserva a margem dos rótulos;
+               se uma fonte de fallback vier mais larga, o texto é cortado em
+               vez de invadir a coluna ao lado — falha visível, não confusa. */
+            .radar svg{width:100%;height:auto;display:block}
+            .radar-lbl{fill:var(--muted);font-family:var(--f-body);font-size:11px;
+                       font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+            .radar-val{fill:var(--text);font-family:var(--f-mono);font-size:11px}
+
+            /* ───────────────────────────────────────────────────────────
+               SELO DE TÍTULO
+               Chanfrado como o resto do vocabulário, e colorido pela
+               CATEGORIA — o tom precisa chegar antes da leitura.
+               ─────────────────────────────────────────────────────────── */
+            .badge-award{
+              --aw:var(--neon);
+              --aw-soft:rgba(176,38,255,.14);
+              display:inline-block;
+              margin-left:.5rem;
+              padding:.1rem .45rem;
+              font-family:var(--f-body);font-size:.62rem;font-weight:700;
+              letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;
+              color:var(--aw);
+              background:var(--aw-soft);
+              border:1px solid var(--aw);
+              cursor:help;
+              vertical-align:middle;
+            }
+            .badge-award.is-epico {--aw:#FFC53D;--aw-soft:rgba(255,197,61,.14)}
+            .badge-award.is-neutro{--aw:var(--neon);--aw-soft:rgba(176,38,255,.14)}
+            .badge-award.is-comico{--aw:#FF57C1;--aw-soft:rgba(255,87,193,.14)}
+
+            /* Só o épico brilha. Se todos brilhassem, nenhum se destacaria. */
+            .badge-award.is-epico{box-shadow:0 0 12px rgba(255,197,61,.35)}
+
+            .badge-award.is-grande{font-size:.72rem;padding:.2rem .6rem;margin-left:0}
+
+            /* ───────────────────────────────────────────────────────────
+               SPARKLINE E BARRA DE K/D
+               ─────────────────────────────────────────────────────────── */
+
+            /* Ocupa a largura do card e altura fixa: a curva é forma, não
+               escala — comparar dois cards pela altura seria enganoso, já que
+               cada um normaliza pelo próprio mínimo e máximo. */
+            .spark{display:block;width:100%;height:22px;margin-top:.5rem;opacity:.85}
+
+            .kdbar{margin-top:.5rem}
+            .kdbar-track{height:6px;display:flex;overflow:hidden;
+                         background:var(--bad);border:1px solid var(--line)}
+            .kdbar-k{display:block;height:100%;background:var(--good)}
+            .kdbar-legend{display:flex;justify-content:space-between;
+                          margin-top:.3rem;font-family:var(--f-mono);font-size:.68rem}
+
+            /* ───────────────────────────────────────────────────────────
+               BOTÃO
+               Fundo escuro, borda neon, glow só no hover/foco — o estado de
+               repouso não compete com os dados.
+               ─────────────────────────────────────────────────────────── */
+            .btn{
+              display:inline-block;
+              font-family:var(--f-body);font-weight:600;font-size:.85rem;
+              letter-spacing:.1em;text-transform:uppercase;
+              color:var(--text);text-decoration:none;
+              background:rgba(176,38,255,.05);
+              border:1px solid var(--neon-dim);
+              padding:.6rem 1.3rem;
+              cursor:pointer;
+              transition:border-color .18s,box-shadow .18s,background .18s;
+            }
+            .btn:hover,.btn:focus-visible{
+              border-color:var(--neon);
+              background:rgba(176,38,255,.12);
+              box-shadow:0 0 16px rgba(176,38,255,.45);
+              outline:none;
+            }
+
+            /* ───────────────────────────────────────────────────────────
+               ESTADOS SEMÂNTICOS DE TEXTO
+               ─────────────────────────────────────────────────────────── */
+            .up{color:var(--good)}
+            .down{color:var(--bad)}
+            .dim{color:var(--muted)}
+            .ct{color:var(--ct)}
+            .tr{color:var(--tr)}
+
+/* ───────────────────────────────────────────────────────────
+   FUNDO 3D
+
+   Camada 0, junto com a grade fina: abaixo das scanlines (1) e
+   do conteúdo (2).
+
+   A tentação era z-index:-1, para a malha ficar atrás até da
+   grade. Isso exigiria tirar o fundo do body e passá-lo ao html,
+   e a propagação de background da raiz não sobrevive a todo
+   compositor — num teste headless a página inteira ficou branca,
+   com o CSS correto. Não vale arriscar o fundo da página por uma
+   ordem de camada que quase ninguém distingue.
+   ─────────────────────────────────────────────────────────── */
+.fundo3d{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  display:block;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+}
+
+
+            /* ───────────────────────────────────────────────────────────
+               ARMAS
+               O destaque vem antes da tabela porque responde à pergunta que a
+               pessoa faz primeiro. Três blocos lado a lado: se fosse um só, a
+               diferença entre "mais usada" e "mais matou" — que é a informação
+               interessante — precisaria ser procurada.
+               ─────────────────────────────────────────────────────────── */
+            .arma-destaques{display:grid;gap:.5rem;margin-bottom:1rem;
+                            grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+            .arma-destaque{
+              background:rgba(255,255,255,.02);
+              border:1px solid var(--line);
+              border-left:2px solid var(--neon);
+              padding:.6rem .8rem;
+            }
+            .arma-destaque .k{display:block;font-size:.62rem;font-weight:600;
+                              letter-spacing:.14em;text-transform:uppercase;
+                              color:var(--muted);margin-bottom:.25rem}
+            .arma-destaque b{display:block;font-family:var(--f-display);
+                             font-weight:700;font-size:1rem;line-height:1.2}
+            .arma-destaque .v{font-family:var(--f-mono);font-size:.78rem;
+                              color:var(--muted)}
+
+            /* A tabela por família fica visualmente mais leve que a detalhada:
+               ela é resumo, não o dado final. */
+            table.familias{min-width:420px;margin-bottom:1.1rem}
+            table.familias tbody td:first-child{font-family:var(--f-body);
+                                                font-weight:600}
+
+            /* ───────────────────────────────────────────────────────────
+               MOVIMENTO
+
+               Uma curva só governa a página inteira: sai rápido e desacelera
+               por muito tempo. É ela que produz a sensação de "fluido" — o
+               elemento parece ter peso e assentar, em vez de deslizar a
+               velocidade constante como um menu de sistema.
+
+               O deslocamento de entrada é curto de propósito (12–18px). O que
+               vende o movimento é a curva e o encadeamento, não a distância;
+               entrada longa vira espera, e esta é uma página que a pessoa abre
+               para ler um número.
+               ─────────────────────────────────────────────────────────── */
+            :root{
+              --ease:cubic-bezier(.16,1,.3,1);
+              --ease-curto:cubic-bezier(.4,0,.2,1);
+              --t-rapido:140ms;
+              --t-medio:280ms;
+              --t-lento:560ms;
+              --stagger:55ms;
+            }
+
+            /* Tudo daqui para baixo é condicional: quem pediu menos movimento
+               recebe a página já assentada, nunca uma versão invisível
+               esperando script. */
+            @media (prefers-reduced-motion:no-preference){
+
+              /* 1. Estrutura — os painéis, que já existem na marcação.
+                 Revelados por IntersectionObserver conforme entram na tela. */
+              .revelar{opacity:0;transform:translateY(18px)}
+              .revelar.is-visivel{
+                opacity:1;transform:none;
+                transition:opacity var(--t-lento) var(--ease) var(--atraso,0ms),
+                           transform var(--t-lento) var(--ease) var(--atraso,0ms);
+              }
+
+              /* 2. Conteúdo — cards, linhas e itens que o JS insere depois.
+                 Animação na inserção, escalonada pelo índice. */
+              .entrar{animation:entrar var(--t-lento) var(--ease) both;
+                      animation-delay:var(--atraso,0ms)}
+
+              @keyframes entrar{
+                from{opacity:0;transform:translateY(12px) scale(.985)}
+                to  {opacity:1;transform:none}
+              }
+
+              /* O cabeçalho não espera scroll: ele já está na tela quando a
+                 página abre, e é o primeiro passo da sequência. */
+              .hdr,.nav{animation:entrar var(--t-medio) var(--ease-curto) both}
+              .nav{animation-delay:0ms}
+              .hdr{animation-delay:60ms}
+            }
+
+            /* Números contados precisam de largura estável: sem isto o card
+               "pula" a cada quadro, porque cada dígito tem largura diferente
+               na Orbitron. */
+            .chip .v,.record,.hl-pts b{font-variant-numeric:tabular-nums}
+
+            /* Barras crescem a partir da origem em vez de aparecer prontas —
+               o valor "chega", que é o mesmo gesto do número contado. */
+            .bar > i,.kdbar-k{transition:width var(--t-lento) var(--ease)}
+
+            /* Sinal de forma que acompanha toda cor de estado.
+               É o que faz o indicador continuar legível para quem não
+               distingue verde de vermelho — e, de quebra, para quem está no
+               sol ou num monitor mal calibrado. Fica aria-hidden porque o
+               significado já está no número ao lado; para o leitor de tela o
+               glifo seria ruído. */
+            .sig{font-family:var(--f-body);font-weight:700;font-size:.78em;
+                 margin-right:.28em;letter-spacing:0}
+
+            /* Foco sempre visível: a página é operável por teclado e o anel
+               padrão do navegador some contra um fundo quase preto. */
+            :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+            /* ───────────────────────────────────────────────────────────
+               MOVIMENTO REDUZIDO
+               Scanlines com flicker e badge pulsando são exatamente o tipo
+               de movimento que incomoda quem pede menos animação. A
+               identidade sobrevive inteira sem eles.
+               ─────────────────────────────────────────────────────────── */
+            @media (prefers-reduced-motion:reduce){
+              *,*::before,*::after{
+                animation-duration:.001ms !important;
+                animation-iteration-count:1 !important;
+                transition-duration:.001ms !important;
+              }
+              body::after{opacity:.3}
+            }
+
+.hdr{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;margin-bottom:1.75rem}
+.hdr-main{flex:1 1 320px;min-width:0}
+.brand{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.22em;
+       text-transform:uppercase;color:var(--neon);margin-bottom:.55rem}
+.brand span{color:var(--muted)}
+
+/* Retrospecto: vitórias em verde, derrotas em vermelho, e o que não
+   foi registrado fica visível em vez de somado a um dos lados. */
+.record{display:flex;align-items:baseline;gap:.5rem;margin-top:.9rem;
+        font-family:var(--f-display);font-weight:900;font-size:1.9rem}
+.record .sep{color:var(--muted);font-size:1.1rem}
+.record .obs{font-family:var(--f-body);font-weight:600;font-size:.72rem;
+             letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:640px}
+thead th{font-family:var(--f-body);font-size:.68rem;font-weight:600;
+         letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+         text-align:right;padding:.5rem .6rem;
+         border-bottom:1px solid var(--line);white-space:nowrap}
+thead th:first-child,thead th:nth-child(2){text-align:left}
+tbody td{padding:.6rem;text-align:right;white-space:nowrap;
+         font-family:var(--f-mono);font-size:.9rem;
+         border-bottom:1px solid rgba(176,38,255,.12)}
+tbody td:first-child,tbody td:nth-child(2){text-align:left}
+tbody tr{--st:var(--neon-dim);transition:background .15s}
+tbody tr.is-win {--st:var(--good)}
+tbody tr.is-loss{--st:var(--bad)}
+tbody td:first-child{box-shadow:inset 2px 0 0 var(--st)}
+tbody tr:hover{background:rgba(176,38,255,.07)}
+tbody tr:last-child td{border-bottom:none}
+tbody a{color:var(--text);text-decoration:none;font-family:var(--f-body);font-weight:600}
+tbody a:hover{color:var(--neon);text-decoration:underline}
+
+/* A tabela de mapas tem outra grade: só o nome do mapa é texto,
+   e a coluna V-D precisa caber o "(+n sem resultado)". */
+table.mapas{min-width:460px}
+table.mapas thead th:nth-child(2){text-align:right}
+table.mapas tbody td:nth-child(2){text-align:right}
+table.mapas thead th:nth-child(3),
+table.mapas tbody td:nth-child(3){text-align:left}
+table.mapas tbody td:nth-child(3) .dim{padding:0 .15rem}
+
+.hint{color:var(--muted);font-size:.82rem;margin:.9rem 0 0}
+footer{position:relative;z-index:2;text-align:center;color:var(--muted);
+       font-size:.76rem;letter-spacing:.08em;padding-bottom:2.5rem}
+
+  </style>
+</head>
+<body><div class="demo-faixa" role="note">DEMO · dados reais de partidas de CS2, congelados em 28/10/2026</div>
+<nav class="nav"><div class="nav-in"><a class="nav-marca" href="/demo/countatic/p/jgbr11">CounTatic</a><div class="nav-links"><a href="/demo/countatic/p/jgbr11" aria-current="page">Perfil</a><a href="/demo/countatic/p/jgbr11/partidas">Partidas</a><a href="/login">Entrar com a Steam</a></div></div></nav>
+<div class="wrap">
+
+  <header class="hdr">
+    <div class="hdr-main">
+      <div class="brand">CounTatic <span>// Painel</span></div>
+      <h1 id="nome">Jogador</h1>
+      <div class="record" id="record"></div>
+      <div class="meta" id="meta"></div>
+    </div>
+    <div id="rank"></div>
+  </header>
+
+  <section class="panel cut">
+    <div class="cut-in">
+      <div class="panel-head"><h2 id="mediasTitle">Médias</h2></div>
+      <p class="hint" style="margin:-.5rem 0 1rem">
+        A cor compara com a <b>média da sua faixa</b>:
+        <span class="up">▲ acima</span> ·
+        <span class="dim">— na média</span> ·
+        <span class="down">▼ abaixo</span>.
+        Sem amostra suficiente na faixa, o número fica neutro.
+      </p>
+      <div id="medias"></div>
+    </div>
+  </section>
+
+  <section class="panel cut">
+    <div class="cut-in">
+      <div class="panel-head"><h2>Evolução</h2></div>
+      <div class="trend-tabs" id="trendTabs" role="group"
+           aria-label="Métrica do gráfico de evolução"></div>
+      <div id="trend" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="panel cut">
+    <div class="cut-in">
+      <div class="panel-head"><h2 id="mapasTitle">Por mapa</h2></div>
+      <div id="mapas"></div>
+    </div>
+  </section>
+
+  <section class="panel cut">
+    <div class="cut-in">
+      <div class="panel-head"><h2>Partidas</h2></div>
+      <div class="scroll">
+        <table>
+          <thead><tr>
+            <th scope="col">Resultado</th>
+            <th scope="col">Mapa</th>
+            <th scope="col">K</th>
+            <th scope="col">D</th>
+            <th scope="col">K/D</th>
+            <th scope="col">ADR</th>
+            <th scope="col">Quando</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="hint">Clique no mapa para abrir o relatório completo da partida.</p>
+    </div>
+  </section>
+
+</div>
+<footer>Médias das últimas partidas analisadas</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  Movimento
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Motor de animação da interface.
+ *
+ * São dois mecanismos, e cada um resolve um caso que o outro não
+ * resolve bem:
+ *
+ *  - `revelar` usa IntersectionObserver e serve para o que já está
+ *    na marcação quando a página abre (os painéis). Ele cobre de
+ *    graça os dois comportamentos: o que está visível anima na
+ *    abertura, o que está abaixo anima ao chegar na tela.
+ *
+ *  - `entrar` anima o que o JS insere depois (cards, linhas,
+ *    destaques). Aqui o observer não serve: o elemento nasce já
+ *    dentro da área visível e o gesto certo é animar na inserção.
+ *
+ * Tudo passa por MOVIMENTO_OK. Quem configurou "menos movimento" no
+ * sistema recebe a página pronta, sem transição e sem contagem — e
+ * a informação aparece igual, que é o ponto.
+ */
+const MOVIMENTO_OK = !(window.matchMedia
+  && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+const Motion = (() => {
+
+  /* O escalonamento é contado por quadro: os elementos que entram
+     juntos se encadeiam, e os que entram depois recomeçam do zero.
+     Sem isso, rolar a página rápido acumularia atraso e os últimos
+     painéis apareceriam segundos atrasados. */
+  let lote = 0, quadroDoLote = -1;
+
+  /* O observer já entregou alguma coisa? A revelação é enfeite, mas
+     o conteúdo por trás dela não é: num ambiente onde o observer
+     não dispare, a página ficaria em branco com o JS funcionando
+     perfeitamente. A rede abaixo cobre esse caso — e some sozinha
+     assim que o observer dá sinal de vida, para não atropelar a
+     revelação por scroll de quem está com tudo funcionando. */
+  let observerVivo = false;
+
+  function atraso() {
+    const agora = Math.floor(performance.now() / 100);
+    if (agora !== quadroDoLote) { quadroDoLote = agora; lote = 0; }
+    // Teto de seis: passar disso vira espera, não encadeamento.
+    return Math.min(lote++, 6);
+  }
+
+  const obs = ("IntersectionObserver" in window) ? new IntersectionObserver(
+    (entradas, self) => {
+      observerVivo = true;
+      entradas.forEach(e => {
+        if (!e.isIntersecting) return;
+        self.unobserve(e.target);
+        mostrar(e.target);
+      });
+    },
+    // Começa um pouco antes de entrar de fato: a animação termina
+    // quando o bloco está de vez na tela, e não depois.
+    { rootMargin: "0px 0px -8% 0px", threshold: 0.05 }
+  ) : null;
+
+  let rede = 0;
+
+  function mostrar(el) {
+    el.style.setProperty("--atraso", (atraso() * 55) + "ms");
+    el.classList.add("is-visivel");
+    contarDentro(el);
+  }
+
+  return {
+    /** Painéis e blocos que já existem na marcação. */
+    revelar(seletor, raiz) {
+      const alvos = (raiz || document).querySelectorAll(seletor);
+      alvos.forEach(el => {
+        if (!MOVIMENTO_OK || !obs) { contarDentro(el); return; }
+        el.classList.add("revelar");
+        obs.observe(el);
+      });
+
+      clearTimeout(rede);
+      rede = setTimeout(() => {
+        if (observerVivo) return;
+        document.querySelectorAll(".revelar:not(.is-visivel)")
+                .forEach(mostrar);
+      }, 1500);
+    },
+
+    /**
+     * Conteúdo recém-inserido pelo JS.
+     *
+     * Chamar depois do innerHTML: os elementos precisam existir.
+     */
+    entrar(raiz, seletor) {
+      const alvos = raiz.querySelectorAll(seletor || ":scope > *");
+      alvos.forEach((el, i) => {
+        if (MOVIMENTO_OK) {
+          el.style.setProperty("--atraso", (Math.min(i, 10) * 40) + "ms");
+          el.classList.add("entrar");
+        }
+      });
+      contarDentro(raiz);
+    },
+
+    contarDentro,
+    contar,
+  };
+
+  function contarDentro(raiz) {
+    raiz.querySelectorAll("[data-contar]").forEach(contar);
+    crescer(raiz);
+  }
+
+  /**
+   * Barras que nascem em zero e crescem até o valor.
+   *
+   * A largura final vem no atributo, não no style: aplicá-la um
+   * quadro depois é o que dá ao navegador um estado inicial de onde
+   * transicionar. Definir os dois no mesmo quadro faria a barra
+   * aparecer pronta.
+   */
+  function crescer(raiz) {
+    const barras = raiz.querySelectorAll("[data-largura]");
+    if (!barras.length) return;
+
+    barras.forEach(b => {
+      const w = b.dataset.largura;
+      delete b.dataset.largura;
+      if (!MOVIMENTO_OK) { b.style.width = w; return; }
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        b.style.width = w;
+      }));
+    });
+  }
+
+  /**
+   * Faz o número subir até o valor final.
+   *
+   * Lê o próprio texto já renderizado em vez de receber o número:
+   * assim o formato — casas decimais, sinal de porcentagem, "—"
+   * para métrica ausente — continua sendo decidido em um lugar só,
+   * por quem monta o card.
+   *
+   * Métrica ausente não conta de zero até nada: ela nem entra aqui.
+   */
+  function contar(el) {
+    if (el.dataset.contado === "1") return;
+    el.dataset.contado = "1";
+
+    const bruto = el.textContent.trim();
+    const m = /^(-?\d+(?:\.\d+)?)(.*)$/.exec(bruto);
+    if (!m || !MOVIMENTO_OK) return;
+
+    const alvo = parseFloat(m[1]);
+    const sufixo = m[2] || "";
+    const casas = (m[1].split(".")[1] || "").length;
+
+    // Números pequenos e inteiros (uma contagem de kills, por
+    // exemplo) não ganham nada em contar: o efeito só aparece
+    // quando há distância para percorrer.
+    if (!isFinite(alvo) || Math.abs(alvo) < 3) return;
+
+    const inicio = performance.now();
+    const duracao = 700;
+
+    function passo(agora) {
+      const t = Math.min((agora - inicio) / duracao, 1);
+      // Mesma curva do CSS: expo-out.
+      const e = 1 - Math.pow(2, -10 * t);
+      const v = alvo * (t === 1 ? 1 : e);
+      el.textContent = v.toFixed(casas) + sufixo;
+      if (t < 1) requestAnimationFrame(passo);
+      else el.textContent = bruto;
+    }
+
+    el.textContent = (0).toFixed(casas) + sufixo;
+    requestAnimationFrame(passo);
+  }
+})();
+
+// ═══════════════════════════════════════════════════════════
+//  Utilitários compartilhados
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Escapa texto para interpolação em HTML.
+ *
+ * Todo dado que vem do servidor passa por aqui: nome de jogador é
+ * escolhido pelo usuário e pode conter marcação.
+ */
+const esc = s => {
+  const d = document.createElement("div");
+  d.textContent = s ?? "";
+  return d.innerHTML;
+};
+
+// ═══════════════════════════════════════════════════════════
+//  Última partida vista
+//  A barra leva ao perfil e à lista, mas sair de uma partida
+//  deixava o jogador sem volta em um clique — ele teria de
+//  reencontrá-la na lista. Guardar a última vista resolve isso
+//  com precisão, e não por aproximação: "a mais recente" nem
+//  sempre é a que ele estava lendo.
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * sessionStorage, não localStorage: o atalho vale para a visita
+ * atual. Voltar amanhã e ser levado a uma partida de ontem seria
+ * confuso.
+ *
+ * Todo acesso é protegido — o armazenamento pode estar bloqueado
+ * (janela privada, arquivo local), e o atalho é conveniência: nunca
+ * pode derrubar a página.
+ */
+const PARTIDA_VISTA = "countatic:ultimaPartida";
+
+function lembrarPartida(token, rotulo) {
+  if (!token) return;
+  try {
+    sessionStorage.setItem(PARTIDA_VISTA, JSON.stringify({ token, rotulo }));
+  } catch (e) { /* sem armazenamento, sem atalho */ }
+}
+
+/** Acrescenta o atalho à barra, se houver partida lembrada. */
+function oferecerVoltaAPartida() {
+  let dados = null;
+  try {
+    dados = JSON.parse(sessionStorage.getItem(PARTIDA_VISTA) || "null");
+  } catch (e) { return; }
+
+  if (!dados || !dados.token) return;
+
+  const links = document.querySelector(".nav-links");
+  if (!links) return;
+
+  const a = document.createElement("a");
+  a.href = "/demo/countatic/m/" + encodeURIComponent(dados.token);
+  a.className = "nav-volta";
+  a.textContent = "← " + (dados.rotulo || "Partida");
+  a.title = "Voltar à última partida que você abriu";
+  links.prepend(a);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Faixas de rank
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Classe CSS da faixa: "AZUL_CLARO" -> " t-azul-claro".
+ *
+ * Devolve string vazia quando a faixa é desconhecida, e aí o
+ * elemento cai no fallback da cor da marca. Todo lugar que mostra
+ * faixa passa por aqui — sem isso, cada tela derivaria a classe do
+ * seu jeito e uma delas ficaria para trás na primeira faixa nova.
+ */
+const classeTier = tier =>
+  tier ? " t-" + String(tier).toLowerCase().replace(/_/g, "-") : "";
+
+/** Nome legível da faixa a partir do enum: "AZUL_CLARO" -> "Azul claro". */
+const nomeTier = tier =>
+  tier ? tier.charAt(0) + String(tier).slice(1).toLowerCase().replace(/_/g, " ") : "";
+
+// ═══════════════════════════════════════════════════════════
+//  Ícones
+//  SVG inline: sem requisição de rede, e herdam a cor do texto
+//  por currentColor, então um mesmo ícone serve a qualquer estado.
+// ═══════════════════════════════════════════════════════════
+
+const ICONS = {
+  aviso:   '<path d="M12 2 1 21h22L12 2zm0 6v7m0 3v.5"/>',
+  sucesso: '<path d="M20 6 9 17l-5-5"/>',
+  info:    '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4v.5"/>',
+
+  // Famílias de métrica. Poucos e genéricos de propósito: um ícone
+  // por métrica daria trinta desenhos para manter, e o ganho de
+  // leitura vem de agrupar visualmente, não de ilustrar cada uma.
+  mira:    '<circle cx="12" cy="12" r="8"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>',
+  morte:   '<path d="M9 21h6v-2H9zM12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>',
+  dano:    '<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>',
+  granada: '<path d="M12 22a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM12 8V5m-2-3h4"/>',
+  fumaca:  '<path d="M5 17h13a3 3 0 0 0 0-6 5 5 0 0 0-9.6-1.6A3.5 3.5 0 0 0 5 17z"/>',
+  duelo:   '<path d="m4 4 8 8m8-8-8 8m0 0-8 8m8-8 8 8"/>',
+  relogio: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+};
+
+/** Envelope do SVG. `stroke` em currentColor mantém a cor no controle do CSS. */
+const icon = (nome, tamanho) =>
+  `<svg class="ico" width="${tamanho || 16}" height="${tamanho || 16}"
+        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        aria-hidden="true">${ICONS[nome] || ""}</svg>`;
+
+// ═══════════════════════════════════════════════════════════
+//  MetricCard
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Card de uma métrica.
+ *
+ *   { label, valor, icone, status, principal, ajuda }
+ *
+ * `status` é 'acima' | 'abaixo' | 'neutro' e colore o NÚMERO, não a
+ * caixa: o fundo é quase transparente justamente para o número ser
+ * o único elemento com peso. `principal` dobra a largura e o
+ * tamanho da fonte — é o que separa K/D de "disparos avaliados",
+ * que antes tinham exatamente o mesmo peso visual.
+ *
+ * A marcação é de duas camadas porque o chanfro recorta a borda
+ * junto com o fundo; sem a camada externa, a diagonal fica sem
+ * linha.
+ */
+function MetricCard({ label, valor, icone, status, principal, ajuda, spark, chave, recorde }) {
+  const classes = ["chip", "cut"];
+  if (status === "acima")  classes.push("is-acima");
+  if (status === "abaixo") classes.push("is-abaixo");
+  if (principal)           classes.push("is-principal");
+
+  // O title nativo dá tooltip por mouse, teclado e leitor de tela
+  // sem uma linha de JS de posicionamento.
+  const attrAjuda = ajuda ? ` title="${esc(ajuda)}"` : "";
+
+  // A seta acompanha a cor em vez de substituí-la. Verde e vermelho
+  // é o par que o daltonismo mais comum não separa, então a forma é
+  // o que garante a leitura — e continua legível em monitor mal
+  // calibrado ou sob sol.
+  const seta = status === "acima" ? "▲" : (status === "abaixo" ? "▼" : "");
+  const sig = seta ? `<span class="sig" aria-hidden="true">${seta}</span>` : "";
+
+  // A chave identifica o card para quem acrescenta a sparkline
+  // depois, quando a resposta do histórico chega.
+  const attrChave = chave ? ` data-metrica="${esc(chave)}"` : "";
+
+  // Recorde pessoal no mapa. Vai depois do número e não no lugar
+  // dele: o valor continua sendo a informação, a chama é o adorno.
+  const pr = recorde
+    ? `<span class="pr" title="Seu melhor resultado neste mapa">🏆</span>`
+    : "";
+  if (recorde) classes.push("is-recorde");
+
+  return `<div class="${classes.join(" ")}"${attrChave}>
+      <div class="cut-in">
+        <div class="k"${attrAjuda}>${icone ? icon(icone, 13) : ""}<span>${esc(label)}</span></div>
+        <div class="v">${sig}<span class="num" data-contar>${esc(valor)}</span>${pr}</div>
+        ${spark || ""}
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MatchBadge
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Selo do título da partida.
+ *
+ * A cor vem da categoria, não do nome: dourado para épico, cor da
+ * marca para neutro, rosa para cômico. Assim o jogador entende o
+ * tom antes de ler — e "Lanterna do Time" em dourado passaria a
+ * impressão errada por um instante.
+ *
+ * O texto completo fica no title: no placar há espaço para o nome,
+ * não para a explicação.
+ */
+function MatchBadge(award, tamanho) {
+  if (!award || !award.nome) return "";
+
+  const cat = String(award.categoria || "NEUTRO").toLowerCase();
+  const cls = "badge-award is-" + esc(cat) + (tamanho === "grande" ? " is-grande" : "");
+
+  // O detalhe entra no tooltip junto da descrição: é o número que
+  // justifica o título, e sem ele o selo é só um elogio sem prova.
+  const ajuda = [award.descricao, award.detalhe]
+    .filter(Boolean).join(" — ");
+
+  return `<span class="${cls}" title="${esc(ajuda)}">${esc(award.nome)}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RadarChart
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Referências de cada eixo do radar.
+ *
+ * As métricas que já são porcentagem entram direto. As que não são
+ * precisam de um teto para virar escala — e o teto é uma escolha,
+ * não um máximo do jogo: 120 de ADR ou 20 de dano de utilitária por
+ * round são desempenhos muito bons, não o limite físico. Quem passar
+ * disso satura em 100%, o que é aceitável num gráfico cuja pergunta
+ * é "qual foi meu papel", não "quanto exatamente eu fiz".
+ *
+ * Escala ABSOLUTA de propósito. Normalizar contra os outros nove da
+ * partida faria a mesma atuação mudar de forma conforme o lobby, e
+ * o radar existe justamente para reconhecer o papel de relance.
+ */
+const EIXOS_RADAR = [
+  {
+    nome: "Mira",
+    // Ambas já são 0–100.
+    calc: m => media([m.headshotPercentage, m.crosshairPlacementScore]),
+  },
+  {
+    nome: "Impacto",
+    calc: m => media([teto(m.adr, 120), m.openingDuelWinRate]),
+  },
+  {
+    // Deliberadamente na posição de BAIXO: é o rótulo mais longo, e
+    // ali a âncora é central, com espaço para os dois lados. Nas
+    // laterais ele vazaria do viewBox e invadiria a coluna vizinha.
+    nome: "Sobrevivência",
+    // Menos mortes por round é melhor, então o eixo é invertido.
+    // 1.0 morte/round é morrer em todo round — o pior caso real.
+    calc: m => typeof m.deathsPerRound === "number"
+      ? Math.max(0, 100 - teto(m.deathsPerRound, 1.0)) : null,
+  },
+  {
+    nome: "Suporte",
+    calc: m => media([m.flashEfficiency, teto(m.utilityDamagePerRound, 20)]),
+  },
+];
+
+const teto = (v, max) =>
+  typeof v === "number" ? Math.min(100, (v / max) * 100) : null;
+
+const media = vs => {
+  const ok = vs.filter(v => typeof v === "number");
+  // Eixo sem nenhuma métrica medida fica sem valor, em vez de zero:
+  // zero desenharia "péssimo" onde não houve medição.
+  return ok.length ? ok.reduce((a, b) => a + b, 0) / ok.length : null;
+};
+
+/**
+ * Radar de papel na partida.
+ *
+ * Recebe o mapa achatado de métricas do jogador. Quatro eixos, então
+ * o polígono é um losango — com poucos eixos a forma fica legível de
+ * relance, que é o objetivo.
+ */
+function RadarChart(metricas) {
+  const valores = EIXOS_RADAR.map(e => e.calc(metricas || {}));
+  if (valores.every(v => v === null)) return "";
+
+  // Área mais larga que alta: o losango é simétrico, mas os rótulos
+  // laterais ocupam espaço só na horizontal. Reservá-lo aqui é o
+  // que impede o texto de sair do viewBox.
+  const W = 300, H = 250, CX = W / 2, CY = H / 2 - 8, R = 70;
+  const ang = i => (Math.PI * 2 * i) / EIXOS_RADAR.length - Math.PI / 2;
+  const ponto = (i, r) =>
+    [CX + Math.cos(ang(i)) * r, CY + Math.sin(ang(i)) * r];
+
+  // Eixo sem medição usa o centro para o polígono fechar, mas não
+  // ganha marcador — a diferença entre "zero" e "não medido"
+  // aparece no rótulo, não na forma.
+  const vertices = valores.map((v, i) =>
+    ponto(i, ((typeof v === "number" ? v : 0) / 100) * R)
+      .map(n => n.toFixed(1)).join(",")).join(" ");
+
+  // Dois anéis: 50% e 100%. Mais que isso vira grade e compete com
+  // o polígono, que é o dado.
+  const aneis = [0.5, 1].map(f => {
+    const p = EIXOS_RADAR.map((_, i) =>
+      ponto(i, R * f).map(n => n.toFixed(1)).join(",")).join(" ");
+    return `<polygon points="${p}" fill="none" stroke="var(--line)" stroke-width="1"/>`;
+  }).join("");
+
+  const raios = EIXOS_RADAR.map((_, i) => {
+    const [x, y] = ponto(i, R);
+    return `<line x1="${CX}" y1="${CY}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"
+                  stroke="var(--line)" stroke-width="1"/>`;
+  }).join("");
+
+  // Nome e valor em DUAS linhas. Na mesma linha, "Sobrevivência 45%"
+  // fica largo demais e encosta no vizinho antes de o viewBox
+  // acabar.
+  const rotulos = EIXOS_RADAR.map((e, i) => {
+    const [x, y] = ponto(i, R + 16);
+    const v = valores[i];
+    const centro = Math.abs(x - CX) < 2;
+    const ancora = centro ? "middle" : (x > CX ? "start" : "end");
+    const valorTxt = typeof v === "number" ? Math.round(v) + "%" : "—";
+
+    // Rótulo de baixo desce um pouco mais para não tocar o vértice.
+    const dy = centro ? (y > CY ? 10 : -4) : 0;
+
+    return `<text x="${x.toFixed(1)}" y="${(y + dy).toFixed(1)}"
+                  text-anchor="${ancora}" class="radar-lbl">
+        <tspan x="${x.toFixed(1)}">${esc(e.nome)}</tspan>
+        <tspan class="radar-val" x="${x.toFixed(1)}" dy="14">${valorTxt}</tspan>
+      </text>`;
+  }).join("");
+
+  const marcas = valores.map((v, i) => {
+    if (typeof v !== "number") return "";
+    const [x, y] = ponto(i, (v / 100) * R);
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3"
+                    fill="var(--neon)"/>`;
+  }).join("");
+
+  return `<div class="radar">
+      <svg viewBox="0 0 ${W} ${H}" role="img"
+           aria-label="Perfil da partida por área de atuação">
+        ${aneis}${raios}
+        <polygon points="${vertices}" fill="rgba(176,38,255,.22)"
+                 stroke="var(--neon)" stroke-width="2"/>
+        ${marcas}${rotulos}
+      </svg>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  WeaponTable
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Nomes legíveis das armas.
+ *
+ * O parser grava o identificador da Valve ("m4a1_silencer"), que é
+ * estável e serve de chave — mas ninguém chama a arma assim. As que
+ * não estiverem aqui caem no próprio id, o que é feio mas correto:
+ * melhor mostrar "negev" do que esconder a linha.
+ */
+const NOMES_ARMA = {
+  ak47:"AK-47", m4a1:"M4A4", m4a1_silencer:"M4A1-S", awp:"AWP",
+  galilar:"Galil", famas:"FAMAS", sg556:"SG 553", aug:"AUG",
+  ssg08:"SSG 08", scar20:"SCAR-20", g3sg1:"G3SG1",
+  deagle:"Desert Eagle", glock:"Glock-18", usp_silencer:"USP-S",
+  hkp2000:"P2000", p250:"P250", fiveseven:"Five-SeveN",
+  tec9:"Tec-9", cz75a:"CZ75-Auto", elite:"Dual Berettas",
+  revolver:"R8 Revolver",
+  mp9:"MP9", mp7:"MP7", mp5sd:"MP5-SD", mac10:"MAC-10",
+  ump45:"UMP-45", p90:"P90", bizon:"PP-Bizon",
+  nova:"Nova", xm1014:"XM1014", mag7:"MAG-7", sawedoff:"Sawed-Off",
+  m249:"M249", negev:"Negev",
+  hegrenade:"Granada HE", molotov:"Molotov", incgrenade:"Incendiária",
+  knife:"Faca", taser:"Zeus", c4:"C4", world:"Queda",
+};
+
+const nomeArma = id => NOMES_ARMA[id] || id;
+
+/**
+ * Tabela de desempenho por arma.
+ *
+ * Ordenada por kills — a arma que mais matou descreve como o
+ * jogador jogou a partida. Precisão e headshot só aparecem quando
+ * há amostra; um traço é mais honesto que "0%" ou "100%" vindos de
+ * três tiros.
+ */
+/**
+ * As armas que definiram a partida, antes da tabela.
+ *
+ * "Mais usada" é contada por disparo, não por kill. Quando ela é
+ * diferente da que mais matou, a diferença é a informação: muito
+ * tiro e pouco resultado.
+ */
+function WeaponDestaques(d) {
+  if (!d) return "";
+
+  const itens = [
+    ["Mais kills", d.maisKills, d.maisKillsValor, "kills"],
+    ["Mais dano",  d.maisDano,  d.maisDanoValor,  "de dano"],
+    ["Mais usada", d.maisUsada, d.maisUsadaValor, "tiros"],
+  ].filter(([, id]) => id);
+
+  if (!itens.length) return "";
+
+  return `<div class="arma-destaques">` + itens.map(([rot, id, val, un]) =>
+      `<div class="arma-destaque">
+         <span class="k">${esc(rot)}</span>
+         <b>${esc(nomeArma(id))}</b>
+         <span class="v">${val} ${esc(un)}</span>
+       </div>`).join("") + `</div>`;
+}
+
+/**
+ * Desempenho somado por família de arma.
+ *
+ * Responde "eu jogo melhor de rifle ou de pistola?", que a lista de
+ * quinze armas não responde. Rifle e rifle de precisão ficam
+ * separados porque são jogos diferentes: controle de recuo de um
+ * lado, posicionamento e um tiro só do outro.
+ */
+function WeaponFamilias(familias) {
+  // Dano conta na filtragem: granada não tem "tiro" nem sempre tem
+  // kill, e sem isto a família Outras sumiria com o dano dela.
+  const lista = (familias || [])
+    .filter(f => f.kills > 0 || f.tiros > 0 || f.damage > 0);
+  if (lista.length < 2) return "";   // uma família só não compara nada
+
+  const linhas = lista.map(f => {
+    const hs = typeof f.headshotPercentage === "number"
+      ? f.headshotPercentage.toFixed(0) + "%" : "—";
+    const acc = typeof f.accuracy === "number"
+      ? f.accuracy.toFixed(0) + "%" : "—";
+    return `<tr>
+        <td>${esc(f.rotulo)}</td>
+        <td>${f.kills}</td>
+        <td>${esc(hs)}</td>
+        <td>${f.damage}</td>
+        <td>${f.tiros || "—"}</td>
+        <td>${esc(acc)}</td>
+      </tr>`;
+  }).join("");
+
+  return `<div class="scroll"><table class="armas familias">
+      <thead><tr>
+        <th scope="col">Família</th>
+        <th scope="col">Kills</th>
+        <th scope="col">HS</th>
+        <th scope="col">Dano</th>
+        <th scope="col">Tiros</th>
+        <th scope="col">Acerto</th>
+      </tr></thead>
+      <tbody>${linhas}</tbody>
+    </table></div>`;
+}
+
+function WeaponTable(armas) {
+  const lista = (armas || [])
+    .filter(a => a.kills > 0 || a.tiros > 0 || a.damage > 0);
+  if (!lista.length) {
+    return `<p class="hint">Sem uso de arma registrado nesta partida.</p>`;
+  }
+
+  const linhas = lista.map(a => {
+    const hs = typeof a.headshotPercentage === "number"
+      ? a.headshotPercentage.toFixed(0) + "%" : "—";
+    const acc = typeof a.accuracy === "number"
+      ? a.accuracy.toFixed(0) + "%" : "—";
+    return `<tr>
+        <td>${esc(nomeArma(a.id))}</td>
+        <td>${a.kills}</td>
+        <td>${esc(hs)}</td>
+        <td>${a.damage}</td>
+        <td>${a.tiros || "—"}</td>
+        <td>${esc(acc)}</td>
+      </tr>`;
+  }).join("");
+
+  return `<div class="scroll"><table class="armas">
+      <thead><tr>
+        <th scope="col">Arma</th>
+        <th scope="col">Kills</th>
+        <th scope="col">HS</th>
+        <th scope="col">Dano</th>
+        <th scope="col">Tiros</th>
+        <th scope="col" title="Disparos que causaram dano. Só aparece com tiros suficientes.">Acerto</th>
+      </tr></thead>
+      <tbody>${linhas}</tbody>
+    </table></div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RoundHighlights
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Os melhores rounds do jogador.
+ *
+ * O placar da partida conta o agregado; isto conta o momento —
+ * "no round 14 você fechou sozinho contra três". A pontuação fica
+ * visível porque é o critério da ordem: sem ela, a lista pareceria
+ * arbitrária.
+ *
+ * Lista vazia é resultado legítimo e é dito com todas as letras.
+ * Inventar um destaque de uma kill para não deixar a seção vazia
+ * seria elogiar o que não houve.
+ */
+function RoundHighlights(destaques) {
+  const lista = destaques || [];
+  if (!lista.length) {
+    return `<p class="hint">Nenhum round se destacou nesta partida.</p>`;
+  }
+
+  const itens = lista.map((d, i) => {
+    const classes = ["hl-item"];
+    if (i === 0) classes.push("is-topo");
+    classes.push(d.venceuRound ? "is-ganho" : "is-perdido");
+
+    return `<li class="${classes.join(" ")}">
+        <div class="hl-round">Round<b>${d.roundNumber}</b></div>
+        <div class="hl-corpo">
+          <div class="hl-titulo">${esc(d.titulo)}</div>
+          <p class="hl-desc">${esc(d.descricao)}</p>
+        </div>
+        <div class="hl-pts" title="Pontuação do round. A unidade é a kill: 1,0 = uma kill.">
+          <b>${d.pontuacao.toFixed(1)}</b>pts
+        </div>
+      </li>`;
+  }).join("");
+
+  return `<ul class="hl">${itens}</ul>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Sparkline
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Micro-gráfico para o rodapé de um MetricCard.
+ *
+ * Sem eixo, sem rótulo, sem ponto — só a forma da curva. O número
+ * do card já diz quanto; a sparkline responde "e isso está subindo
+ * ou descendo?", que é a pergunta seguinte. Qualquer ornamento aqui
+ * competiria com o número, que é o elemento principal do card.
+ *
+ * O último ponto ganha uma marca, porque é o valor que o card está
+ * exibindo — sem ela a curva parece desligada do número.
+ */
+function Sparkline(valores, maiorEhMelhor) {
+  const v = (valores || []).filter(n => typeof n === "number");
+  if (v.length < 2) return "";
+
+  const W = 100, H = 24, P = 2;
+  let min = Math.min(...v), max = Math.max(...v);
+  if (min === max) { min -= 1; max += 1; }
+
+  const x = i => P + (i * (W - 2 * P)) / (v.length - 1);
+  const y = n => P + (H - 2 * P) * (1 - (n - min) / (max - min));
+
+  const pontos = v.map((n, i) => `${x(i).toFixed(1)},${y(n).toFixed(1)}`).join(" ");
+
+  // A cor segue a direção da métrica: em mortes por round, a curva
+  // subindo é notícia ruim.
+  const subiu = v[v.length - 1] > v[0];
+  const bom = maiorEhMelhor === false ? !subiu : subiu;
+  const cor = v[v.length - 1] === v[0] ? "var(--muted)"
+            : (bom ? "var(--good)" : "var(--bad)");
+
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"
+               aria-hidden="true">
+      <polyline points="${pontos}" fill="none" stroke="${cor}"
+                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${x(v.length - 1).toFixed(1)}" cy="${y(v[v.length - 1]).toFixed(1)}"
+              r="2" fill="${cor}"/>
+    </svg>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  KdBar
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Proporção de kills e mortes como barra.
+ *
+ * "2.25" exige converter mentalmente para saber se foram 18/8 ou
+ * 45/20. A barra mostra o volume junto da razão, e as duas metades
+ * carregam o próprio número — a cor sozinha não diria qual é qual
+ * para quem não distingue verde de vermelho.
+ */
+function KdBar(kills, mortes) {
+  const k = Number(kills) || 0, d = Number(mortes) || 0;
+  const total = k + d;
+  if (!total) return "";
+
+  const pk = (k / total) * 100;
+
+  return `<div class="kdbar" role="img"
+               aria-label="${k} kills contra ${d} mortes">
+      <div class="kdbar-track">
+        <span class="kdbar-k" data-largura="${pk.toFixed(1)}%" style="width:0"></span>
+      </div>
+      <div class="kdbar-legend">
+        <span class="up">${k} kills</span>
+        <span class="down">${d} mortes</span>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TrendChart
+// ═══════════════════════════════════════════════════════════
+
+/** IDs de gradiente precisam ser únicos: dois gráficos na mesma página colidiriam. */
+let _trendSeq = 0;
+
+/**
+ * Gráfico de linha minimalista da evolução de uma métrica.
+ *
+ * Recebe a resposta de GET /api/players/{steamId}/trend:
+ *   { label, maiorEhMelhor, media, pontos: [{playedAt, mapName, valor}] }
+ *
+ * Sem grade ao fundo de propósito — a única linha horizontal é a
+ * média da própria série, que é a referência que dá sentido à
+ * inclinação. Grade completa numa série de dez pontos acrescenta
+ * dez linhas para informar o que dois rótulos já informam.
+ *
+ * SVG inline em vez de biblioteca: são quatro formas geométricas, e
+ * qualquer lib de gráfico traria um bundler junto — o projeto não
+ * tem nenhum, por decisão de arquitetura.
+ */
+function TrendChart(serie) {
+  const pts = (serie && serie.pontos) || [];
+  const medidos = pts.filter(p => typeof p.valor === "number");
+
+  if (medidos.length < 2) {
+    return `<p class="hint">Ainda não há partidas suficientes para desenhar a evolução
+            de ${esc(serie && serie.label || "")}. São necessárias ao menos duas com a
+            métrica medida.</p>`;
+  }
+
+  const W = 640, H = 160, PAD_X = 8, PAD_Y = 16;
+  const id = "tg" + (++_trendSeq);
+
+  const valores = medidos.map(p => p.valor);
+  let min = Math.min(...valores), max = Math.max(...valores);
+  // Série constante viraria uma divisão por zero e uma linha colada
+  // na borda; abrir uma folga a centraliza.
+  if (min === max) { min -= 1; max += 1; }
+
+  const x = i => PAD_X + (i * (W - 2 * PAD_X)) / (pts.length - 1 || 1);
+  const y = v => PAD_Y + (H - 2 * PAD_Y) * (1 - (v - min) / (max - min));
+
+  // Quebra a linha em segmentos: um ponto sem valor é métrica
+  // AUSENTE, não zero. Ligar por cima fingiria uma medição.
+  const segmentos = [];
+  let atual = [];
+  pts.forEach((p, i) => {
+    if (typeof p.valor === "number") {
+      atual.push(`${x(i).toFixed(1)},${y(p.valor).toFixed(1)}`);
+    } else if (atual.length) {
+      segmentos.push(atual); atual = [];
+    }
+  });
+  if (atual.length) segmentos.push(atual);
+
+  const linhas = segmentos
+    .filter(s => s.length > 1)
+    .map(s => `<polyline points="${s.join(" ")}" fill="none"
+                stroke="url(#${id}s)" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"/>`)
+    .join("");
+
+  // Área sob o maior segmento, só como reforço de leitura.
+  const maior = segmentos.slice().sort((a, b) => b.length - a.length)[0] || [];
+  const area = maior.length > 1
+    ? `<polygon points="${maior[0].split(",")[0]},${H - PAD_Y} ${maior.join(" ")} ${maior[maior.length - 1].split(",")[0]},${H - PAD_Y}"
+          fill="url(#${id}a)" stroke="none"/>`
+    : "";
+
+  // A bolinha carrega o resultado da partida. Saber que o K/D foi
+  // 1.5 é uma informação; saber que foi 1.5 numa DERROTA é a que
+  // muda o que o jogador vai investigar.
+  const bolinhas = pts.map((p, i) => {
+    if (typeof p.valor !== "number") return "";
+    const cor = p.won === true ? "var(--good)"
+              : (p.won === false ? "var(--bad)" : "var(--neon)");
+    return `<circle class="tp" cx="${x(i).toFixed(1)}" cy="${y(p.valor).toFixed(1)}"
+              r="4" fill="var(--bg)" stroke="${cor}" stroke-width="2"
+              tabindex="0" data-i="${i}"/>`;
+  }).join("");
+
+  // Ponto ausente vira marca vazada na base, com rótulo. Deixar só
+  // o buraco faz parecer defeito de renderização; preencher com
+  // zero afirmaria um desempenho que não foi medido.
+  const ausentes = pts.map((p, i) => {
+    if (typeof p.valor === "number") return "";
+    return `<g class="gap">
+        <line x1="${x(i).toFixed(1)}" x2="${x(i).toFixed(1)}"
+              y1="${PAD_Y}" y2="${H - PAD_Y}"
+              stroke="var(--line)" stroke-width="1" stroke-dasharray="2 4"/>
+        <circle class="tp" cx="${x(i).toFixed(1)}" cy="${H - PAD_Y}" r="3.5"
+                fill="none" stroke="var(--muted)" stroke-width="1.5"
+                stroke-dasharray="2 2" tabindex="0" data-i="${i}"/>
+      </g>`;
+  }).join("");
+
+  const linhaRef = (v, cor, titulo) =>
+    (typeof v === "number" && v >= min && v <= max)
+      ? `<line x1="${PAD_X}" x2="${W - PAD_X}" y1="${y(v).toFixed(1)}"
+               y2="${y(v).toFixed(1)}" stroke="${cor}"
+               stroke-width="1" stroke-dasharray="4 4"><title>${esc(titulo)}</title></line>`
+      : "";
+
+  // Duas referências com pesos diferentes: a sua média é a que se
+  // compara consigo mesmo; a da faixa diz se já está acima do
+  // esperado para o nível.
+  //
+  // A linha da faixa usa a COR da faixa, como todo lugar que a
+  // exibe — assim ela se identifica sozinha, sem depender de o
+  // usuário abrir o tooltip para saber o que é aquela segunda
+  // linha. Fica com opacidade menor para não competir com a linha
+  // do próprio desempenho.
+  const media = linhaRef(serie.media, "var(--line)", "Sua média")
+    + linhaRef(serie.mediaDaFaixa, "var(--tier,rgba(139,127,168,.35))",
+               "Média da faixa " + (serie.faixaLabel || ""));
+
+  // Primeiro vs. último ponto medido: é a leitura que o jogador quer
+  // ("estou melhorando?"), e ela respeita a direção da métrica.
+  const ini = valores[0], fim = valores[valores.length - 1];
+  const delta = fim - ini;
+  const melhorou = serie.maiorEhMelhor ? delta > 0 : delta < 0;
+  const neutro = Math.abs(delta) < 1e-9;
+  const cls = neutro ? "dim" : (melhorou ? "up" : "down");
+  const seta = neutro ? "—" : (delta > 0 ? "▲" : "▼");
+
+  // Âncoras de tempo. Só as pontas e o meio: uma data por ponto
+  // viraria uma fileira ilegível, e o que o cérebro precisa é da
+  // janela ("isso é de um mês ou de ontem?").
+  const dataCurta = p => p.playedAt
+    ? new Date(p.playedAt).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"})
+    : "";
+  const ultimo = pts.length - 1;
+  const meio = Math.floor(ultimo / 2);
+  const eixoX = [0, meio, ultimo]
+    .filter((v, i, a) => a.indexOf(v) === i)
+    .map(i => {
+      const ancora = i === 0 ? "start" : (i === ultimo ? "end" : "middle");
+      const rotulo = i === ultimo ? "mais recente" : dataCurta(pts[i]);
+      return `<text x="${x(i).toFixed(1)}" y="${H - 2}" text-anchor="${ancora}"
+                    class="eixo">${esc(rotulo)}</text>`;
+    }).join("");
+
+  const legendaFaixa = typeof serie.mediaDaFaixa === "number"
+    ? `<span class="trend-faixa">· ${esc(nomeTier(serie.faixaTier) || "faixa")} `
+      + `${esc(serie.mediaDaFaixa.toFixed(1))}</span>`
+    : "";
+
+  // A classe da faixa entra no container para que --tier valha para
+  // a linha de referência e para o rodapé.
+  return `
+    <div class="trend${classeTier(serie.faixaTier)}"
+         data-serie='${esc(JSON.stringify(pts))}'>
+      <div class="trend-head">
+        <span class="trend-label">${esc(serie.label)}</span>
+        <span class="${cls}"><span class="sig" aria-hidden="true">${seta}</span>${
+          esc((delta >= 0 ? "+" : "") + delta.toFixed(2))}</span>
+        <span class="dim">nas últimas ${pts.length} partidas</span>
+      </div>
+      <div class="trend-plot">
+        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"
+             role="img" aria-label="Evolução de ${esc(serie.label)}">
+          <defs>
+            <linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#5B8DEF"/>
+              <stop offset="100%" stop-color="var(--neon)"/>
+            </linearGradient>
+            <linearGradient id="${id}a" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(176,38,255,.28)"/>
+              <stop offset="100%" stop-color="rgba(176,38,255,0)"/>
+            </linearGradient>
+          </defs>
+          ${media}${area}${linhas}${ausentes}${bolinhas}${eixoX}
+        </svg>
+        <div class="tip" hidden></div>
+      </div>
+      <div class="trend-foot">
+        <span class="dim mono">${esc(min.toFixed(1))}</span>
+        <span class="dim">sua média ${esc(typeof serie.media === "number" ? serie.media.toFixed(1) : "—")}
+          ${legendaFaixa}</span>
+        <span class="dim mono">${esc(max.toFixed(1))}</span>
+      </div>
+    </div>`;
+}
+
+/**
+ * Liga o tooltip do gráfico depois de ele entrar no DOM.
+ *
+ * Um listener no container em vez de um por bolinha: são até
+ * cinquenta pontos, e delegar mantém um handler só. O balão é
+ * posicionado em % da largura, então acompanha o SVG que estica.
+ */
+function ativarTooltip(container) {
+  const raiz = container.querySelector(".trend");
+  if (!raiz) return;
+
+  const plot = raiz.querySelector(".trend-plot");
+  const tip = raiz.querySelector(".tip");
+  const pts = JSON.parse(raiz.dataset.serie || "[]");
+
+  const mostrar = alvo => {
+    const p = pts[Number(alvo.dataset.i)];
+    if (!p) return;
+
+    const data = p.playedAt
+      ? new Date(p.playedAt).toLocaleDateString("pt-BR",
+          {day:"2-digit", month:"2-digit", year:"numeric"})
+      : "";
+
+    let resultado = "";
+    if (p.won === true || p.won === false) {
+      const placar = (p.scoreSelf != null && p.scoreEnemy != null)
+        ? ` ${p.scoreSelf}-${p.scoreEnemy}` : "";
+      resultado = `<span class="${p.won ? "up" : "down"}">${
+        p.won ? "Vitória" : "Derrota"}${esc(placar)}</span>`;
+    }
+
+    const valor = typeof p.valor === "number"
+      ? `<b>${esc(p.valor)}</b>`
+      : `<span class="dim">não medido nesta partida</span>`;
+
+    tip.innerHTML = `${valor}<span class="dim">${esc(p.mapName || "")}</span>`
+                  + `${resultado}<span class="dim">${esc(data)}</span>`;
+
+    // A bolinha vive num viewBox de largura fixa; converter para %
+    // faz o balão seguir o SVG em qualquer largura de tela.
+    const cx = Number(alvo.getAttribute("cx"));
+    tip.style.left = (cx / 640 * 100) + "%";
+    tip.hidden = false;
+  };
+
+  const esconder = () => { tip.hidden = true; };
+
+  plot.addEventListener("pointerover", e => {
+    if (e.target.classList.contains("tp")) mostrar(e.target);
+  });
+  plot.addEventListener("pointerleave", esconder);
+  // Teclado: as bolinhas são focáveis, então o mesmo balão serve.
+  plot.addEventListener("focusin", e => {
+    if (e.target.classList.contains("tp")) mostrar(e.target);
+  });
+  plot.addEventListener("focusout", esconder);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CoachPanel
+// ═══════════════════════════════════════════════════════════
+
+/** Ordem de exibição: o acionável primeiro. Espelha a enum Severidade do Java. */
+const ORDEM_GRAVIDADE = { AVISO: 0, INFO: 1, SUCESSO: 2 };
+
+const ROTULO_GRAVIDADE = { AVISO: "Corrigir", INFO: "Observar", SUCESSO: "Manter" };
+
+/**
+ * Painel consolidado de feedback.
+ *
+ * Recebe a lista já achatada de todas as categorias:
+ *   [{ categoria, gravidade, texto }]
+ *
+ * Antes as dicas ficavam espalhadas em listas soltas abaixo de cada
+ * categoria de métrica. O problema não era o volume — eram no máximo
+ * 11 — e sim a falta de hierarquia: um elogio e um alerta tinham o
+ * mesmo peso visual, e o jogador precisava ler tudo para achar o que
+ * fazer. Aqui a ordenação por gravidade resolve isso sem esconder
+ * nada.
+ */
+function CoachPanel(insights) {
+  if (!insights || !insights.length) {
+    return `<p class="hint">Sem dicas para esta partida.</p>`;
+  }
+
+  const ordenados = [...insights].sort((a, b) =>
+    (ORDEM_GRAVIDADE[a.gravidade] ?? 9) - (ORDEM_GRAVIDADE[b.gravidade] ?? 9));
+
+  const itens = ordenados.map(i => {
+    const g = (i.gravidade || "INFO").toLowerCase();
+    return `<li class="coach-item is-${esc(g)}">
+        ${icon(g, 18)}
+        <div class="coach-txt">
+          <p>${esc(i.texto)}</p>
+          <span class="coach-meta">${esc(i.categoria)} · ${esc(ROTULO_GRAVIDADE[i.gravidade] || "")}</span>
+        </div>
+      </li>`;
+  }).join("");
+
+  return `<ul class="coach">${itens}</ul>`;
+}
+
+/**
+ * Promove o alerta mais grave para o topo da página.
+ *
+ * O painel completo fica no fim da rolagem, e quem abre o relatório
+ * pelo link da Steam costuma ler o placar e sair. Trazer UM aviso
+ * para cima resolve isso sem transformar a página numa parede de
+ * alertas — mais de um banner deixa de ser destaque.
+ *
+ * Só AVISO sobe: elogio não precisa interromper a leitura.
+ */
+function CoachBanner(insights) {
+  const aviso = (insights || []).find(i => i.gravidade === "AVISO");
+  if (!aviso) return "";
+
+  return `<div class="coach-banner">
+      ${icon("aviso", 20)}
+      <div>
+        <p>${esc(aviso.texto)}</p>
+        <a href="#coachTitle">Ver tudo o que treinar</a>
+      </div>
+    </div>`;
+}
+
+/**
+ * Achata `insights` do DTO — { categoria: { chave: {texto, gravidade} } } —
+ * na lista que o CoachPanel consome.
+ *
+ * A chave interna é descartada de propósito: ela é o identificador
+ * técnico do insight ("utilityDamage", "smokeUsage") e não diz nada
+ * ao jogador. Quem dá contexto é a categoria.
+ */
+function achatarInsights(porCategoria) {
+  const saida = [];
+  for (const [categoria, mapa] of Object.entries(porCategoria || {})) {
+    for (const ins of Object.values(mapa || {})) {
+      if (!ins || !ins.texto) continue;
+      saida.push({ categoria, texto: ins.texto, gravidade: ins.gravidade });
+    }
+  }
+  return saida;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Fundo 3D — malha de radar em WebGL
+// ═══════════════════════════════════════════════════════════
+
+(function fundo3d() {
+
+  const canvas = document.createElement("canvas");
+  canvas.className = "fundo3d";
+  // Decoração pura: não entra na árvore de acessibilidade e não
+  // recebe ponteiro.
+  canvas.setAttribute("aria-hidden", "true");
+  document.body.insertBefore(canvas, document.body.firstChild);
+
+  const gl = canvas.getContext("webgl", {
+    alpha: true, antialias: true, depth: false,
+    // Fundo decorativo não justifica acordar a GPU dedicada de um
+    // notebook e comer bateria de quem só quer ler o relatório.
+    powerPreference: "low-power",
+  });
+
+  // Sem WebGL a página continua exatamente como era: fundo sólido,
+  // grade e scanlines. O fundo é adorno, nunca requisito.
+  if (!gl) { canvas.remove(); return; }
+
+  // ── Malha ────────────────────────────────────────────────
+  // Linhas em X e em Z. A densidade é modesta de propósito: mais
+  // linhas não deixam o relevo mais legível a 10% de opacidade,
+  // só custam vértices.
+  const COLUNAS = 44, FILAS = 34;
+  const pontos = [];
+
+  for (let f = 0; f < FILAS; f++) {
+    const z = f / (FILAS - 1);
+    for (let c = 0; c < COLUNAS - 1; c++) {
+      const x1 = (c / (COLUNAS - 1)) * 2 - 1;
+      const x2 = ((c + 1) / (COLUNAS - 1)) * 2 - 1;
+      pontos.push(x1, z, x2, z);
+    }
+  }
+  for (let c = 0; c < COLUNAS; c++) {
+    const x = (c / (COLUNAS - 1)) * 2 - 1;
+    for (let f = 0; f < FILAS - 1; f++) {
+      pontos.push(x, f / (FILAS - 1), x, (f + 1) / (FILAS - 1));
+    }
+  }
+
+  const vertices = new Float32Array(pontos);
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+  // ── Shaders ──────────────────────────────────────────────
+  const VS = `
+    attribute vec2 aGrade;
+
+    uniform float uFase;
+    uniform vec2  uMouse;
+    uniform float uAspecto;
+
+    varying float vProf;
+
+    void main() {
+      float x = aGrade.x;   // -1 a 1, largura da malha
+      float z = aGrade.y;   //  0 a 1, do observador ao horizonte
+
+      // Relevo, em unidades de mundo. Três ondas de períodos que
+      // não fecham entre si: o padrão nunca se repete de forma
+      // reconhecível. Elas correm na direção do observador — é daí
+      // que vem o movimento, já que a geometria fica ancorada
+      // (deslocar os vértices em Z abriria uma emenda no ponto
+      // onde a malha reinicia).
+      float h = sin(x * 1.6 + uFase * 0.9) * 0.38
+              + sin(z * 6.0 - uFase * 1.5) * 0.28
+              + sin((x + z * 2.0) * 3.1 + uFase * 0.6) * 0.16;
+
+      // Câmera de verdade: 1,3 unidade acima do plano, olhando
+      // para o horizonte. A profundidade cresce com o quadrado de
+      // z, o que põe mais linhas perto — onde o relevo se lê — e
+      // comprime o fundo, como perspectiva real faz.
+      float Zw = 0.9 + z * z * 13.0;
+
+      float X = x * 7.0 + uMouse.x * 0.9;
+      float Y = h - 1.30 + uMouse.y * 0.25;
+
+      const float f = 1.1;   // distância focal
+
+      float sx = (X * f) / Zw;
+      // Horizonte logo acima da metade da tela: abaixo disso a
+      // malha só aparecia nos cantos inferiores, escondida pelo
+      // painel de conteúdo.
+      float sy = (Y * f) / Zw + 0.02;
+
+      gl_Position = vec4(sx / uAspecto, sy, 0.0, 1.0);
+      vProf = z;
+    }
+  `;
+
+  const FS = `
+    precision mediump float;
+
+    varying float vProf;
+    uniform float uForca;
+
+    void main() {
+      // Some nas duas pontas: perto, para a malha não subir por
+      // cima do conteúdo; longe, como névoa de profundidade.
+      float perto = smoothstep(0.04, 0.30, vProf);
+      float longe = 1.0 - smoothstep(0.72, 1.0, vProf);
+      float a = perto * longe * uForca;
+
+      // Roxo da marca perto, virando ciano nas cristas distantes —
+      // o mesmo par que o resto do HUD usa para foco.
+      vec3 cor = mix(vec3(0.69, 0.15, 1.0),
+                     vec3(0.00, 0.94, 1.0),
+                     smoothstep(0.35, 0.95, vProf) * 0.55);
+
+      // A cor sai pura e o alfa faz o trabalho uma vez só. Com
+      // blendFunc(SRC_ALPHA, ONE), escrever cor*a aqui aplicaria o
+      // alfa duas vezes — a 0,2 de força sobrava 4% do brilho, e a
+      // malha ficava praticamente invisível.
+      gl_FragColor = vec4(cor, a);
+    }
+  `;
+
+  function compilar(tipo, fonte) {
+    const s = gl.createShader(tipo);
+    gl.shaderSource(s, fonte);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) return null;
+    return s;
+  }
+
+  const vs = compilar(gl.VERTEX_SHADER, VS);
+  const fs = compilar(gl.FRAGMENT_SHADER, FS);
+  if (!vs || !fs) { canvas.remove(); return; }
+
+  const prog = gl.createProgram();
+  gl.attachShader(prog, vs);
+  gl.attachShader(prog, fs);
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { canvas.remove(); return; }
+
+  gl.useProgram(prog);
+
+  const aGrade   = gl.getAttribLocation(prog, "aGrade");
+  const uFase    = gl.getUniformLocation(prog, "uFase");
+  const uMouse   = gl.getUniformLocation(prog, "uMouse");
+  const uAspecto = gl.getUniformLocation(prog, "uAspecto");
+  const uForca   = gl.getUniformLocation(prog, "uForca");
+
+  gl.enableVertexAttribArray(aGrade);
+  gl.vertexAttribPointer(aGrade, 2, gl.FLOAT, false, 0, 0);
+
+  // Aditivo: linhas que se cruzam somam brilho, que é como neon se
+  // comporta. Com alpha comum os cruzamentos ficariam iguais ao
+  // resto e a malha perderia o relevo.
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
+  // ── Estado ───────────────────────────────────────────────
+  // A força é baixa de propósito: o fundo tem de dar sinal de vida
+  // sem nunca disputar com um número na tela.
+  const FORCA = 0.20;
+
+  let mouseX = 0, mouseY = 0, alvoX = 0, alvoY = 0;
+  let fase = 0, impulso = 0, ultimoScroll = window.scrollY;
+
+  function dimensionar() {
+    // Teto no devicePixelRatio: num monitor 3x, um fundo em
+    // resolução nativa é nove vezes o trabalho para um enfeite.
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+    const l = Math.floor(canvas.clientWidth * dpr);
+    const a = Math.floor(canvas.clientHeight * dpr);
+    if (canvas.width === l && canvas.height === a) return;
+    canvas.width = l;
+    canvas.height = a;
+    gl.viewport(0, 0, l, a);
+    gl.uniform1f(uAspecto, Math.max(l / Math.max(a, 1), 0.5));
+  }
+
+  function desenhar() {
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(uFase, fase);
+    gl.uniform2f(uMouse, mouseX, mouseY);
+    gl.uniform1f(uForca, FORCA);
+    gl.drawArrays(gl.LINES, 0, vertices.length / 2);
+  }
+
+  dimensionar();
+
+  // Movimento reduzido: um quadro só. O relevo continua lá — o que
+  // desaparece é a ondulação, que é justamente o que incomoda.
+  if (!MOVIMENTO_OK) {
+    desenhar();
+    window.addEventListener("resize", () => { dimensionar(); desenhar(); });
+    return;
+  }
+
+  window.addEventListener("pointermove", e => {
+    alvoX = (e.clientX / window.innerWidth) * 2 - 1;
+    alvoY = (e.clientY / window.innerHeight) * 2 - 1;
+  }, { passive: true });
+
+  window.addEventListener("scroll", () => {
+    // A velocidade do scroll vira impulso na onda: a malha
+    // acelera enquanto a pessoa rola e desacelera sozinha.
+    const d = window.scrollY - ultimoScroll;
+    ultimoScroll = window.scrollY;
+    impulso += Math.min(Math.abs(d), 60) * 0.0016;
+  }, { passive: true });
+
+  let anterior = 0;
+
+  function laco(agora) {
+    requestAnimationFrame(laco);
+
+    // Aba em segundo plano não desenha. O rAF já costuma parar,
+    // mas em janela dividida ele continua rodando.
+    if (document.hidden) { anterior = agora; return; }
+
+    const dt = Math.min((agora - anterior) / 1000, 0.05);
+    anterior = agora;
+
+    // Perseguição amortecida: o parallax chega ao ponteiro com
+    // atraso, que é o que faz parecer profundidade e não recorte.
+    mouseX += (alvoX - mouseX) * 0.045;
+    mouseY += (alvoY - mouseY) * 0.045;
+
+    impulso *= 0.94;
+    fase += dt * (0.32 + impulso);
+
+    dimensionar();
+    desenhar();
+  }
+
+  requestAnimationFrame(laco);
+})();
+
+
+const DASH = {"steamId64":"76561190000000001","playerName":"JGBR11","partidasAnalisadas":20,"rankTier":"AZUL","rankTierLabel":"Azul (10.000–14.999)","csRating":11319,"vitorias":8,"derrotas":5,"resultadoDesconhecido":7,"medias":{"deathsPerRound":0.66,"flashEfficiency":31.16,"closeRangeWinRate":49.07,"kdRatio":1.23,"killsPerRound":0.76,"utilityDamagePerRound":4.54,"earlyDeathRate":0,"longRangeWinRate":51.11,"openingDuelWinRate":43.77,"crosshairPlacementScore":48.03,"headshotPercentage":31.4,"tradeKillsPerRound":0.13,"adr":80.05},"mediasDaFaixa":{"deathsPerRound":0.73,"flashEfficiency":27.81,"closeRangeWinRate":49.6,"kdRatio":1.05,"killsPerRound":0.73,"utilityDamagePerRound":4.72,"earlyDeathRate":0,"longRangeWinRate":51.03,"openingDuelWinRate":48.77,"crosshairPlacementScore":55.89,"headshotPercentage":40.14,"tradeKillsPerRound":0.11,"adr":77.76},"porMapa":[{"mapName":"de_mirage","partidas":7,"vitorias":3,"derrotas":2,"resultadoDesconhecido":2,"kdRatio":1.05,"adr":76.6},{"mapName":"de_dust2","partidas":5,"vitorias":2,"derrotas":0,"resultadoDesconhecido":3,"kdRatio":1.15,"adr":79.57},{"mapName":"de_inferno","partidas":4,"vitorias":1,"derrotas":2,"resultadoDesconhecido":1,"kdRatio":1.02,"adr":72.57},{"mapName":"de_cache","partidas":2,"vitorias":2,"derrotas":0,"resultadoDesconhecido":0,"kdRatio":2.48,"adr":104.97},{"mapName":"de_ancient","partidas":1,"vitorias":0,"derrotas":0,"resultadoDesconhecido":1,"kdRatio":1.28,"adr":95.92},{"mapName":"de_nuke","partidas":1,"vitorias":0,"derrotas":1,"resultadoDesconhecido":0,"kdRatio":1.17,"adr":70.86}],"partidas":[{"matchId":32,"publicToken":null,"mapName":"de_inferno","playedAt":"2026-08-30T20:09:17Z","won":false,"scoreSelf":7,"scoreEnemy":13,"kills":14,"deaths":17,"adr":67.95,"kdRatio":0.82},{"matchId":31,"publicToken":null,"mapName":"de_mirage","playedAt":"2026-08-30T01:31:59Z","won":false,"scoreSelf":9,"scoreEnemy":13,"kills":9,"deaths":20,"adr":71.55,"kdRatio":0.45},{"matchId":30,"publicToken":null,"mapName":"de_mirage","playedAt":"2026-08-30T00:58:57Z","won":false,"scoreSelf":6,"scoreEnemy":13,"kills":12,"deaths":14,"adr":66,"kdRatio":0.86},{"matchId":29,"publicToken":null,"mapName":"de_cache","playedAt":"2026-08-23T22:41:09Z","won":true,"scoreSelf":13,"scoreEnemy":4,"kills":19,"deaths":7,"adr":87.94,"kdRatio":2.71},{"matchId":28,"publicToken":"28","mapName":"de_cache","playedAt":"2026-08-23T17:47:00Z","won":true,"scoreSelf":13,"scoreEnemy":3,"kills":18,"deaths":8,"adr":122,"kdRatio":2.25},{"matchId":27,"publicToken":"27","mapName":"de_mirage","playedAt":"2026-08-23T17:06:42Z","won":true,"scoreSelf":13,"scoreEnemy":8,"kills":19,"deaths":13,"adr":95.76,"kdRatio":1.46},{"matchId":26,"publicToken":"26","mapName":"de_nuke","playedAt":"2026-08-22T22:55:30Z","won":false,"scoreSelf":13,"scoreEnemy":16,"kills":21,"deaths":18,"adr":70.86,"kdRatio":1.17},{"matchId":25,"publicToken":null,"mapName":"de_inferno","playedAt":"2026-08-22T22:01:57Z","won":true,"scoreSelf":16,"scoreEnemy":13,"kills":16,"deaths":20,"adr":56.48,"kdRatio":0.8},{"matchId":24,"publicToken":null,"mapName":"de_dust2","playedAt":"2026-08-22T17:43:31Z","won":true,"scoreSelf":13,"scoreEnemy":9,"kills":15,"deaths":14,"adr":62.05,"kdRatio":1.07},{"matchId":23,"publicToken":null,"mapName":"de_mirage","playedAt":"2026-08-22T17:07:30Z","won":true,"scoreSelf":13,"scoreEnemy":6,"kills":10,"deaths":14,"adr":67.95,"kdRatio":0.71},{"matchId":22,"publicToken":"22","mapName":"de_inferno","playedAt":"2026-08-22T16:27:43Z","won":false,"scoreSelf":9,"scoreEnemy":13,"kills":19,"deaths":16,"adr":92.59,"kdRatio":1.19},{"matchId":21,"publicToken":"21","mapName":"de_dust2","playedAt":"2026-08-22T15:53:39Z","won":true,"scoreSelf":13,"scoreEnemy":5,"kills":19,"deaths":14,"adr":102,"kdRatio":1.36},{"matchId":20,"publicToken":null,"mapName":"de_mirage","playedAt":"2026-08-22T14:05:34Z","won":true,"scoreSelf":13,"scoreEnemy":5,"kills":10,"deaths":11,"adr":71.06,"kdRatio":0.91},{"matchId":16,"publicToken":null,"mapName":"de_ancient","playedAt":"2026-08-15T21:14:44Z","won":null,"scoreSelf":null,"scoreEnemy":null,"kills":23,"deaths":18,"adr":95.92,"kdRatio":1.28},{"matchId":15,"publicToken":null,"mapName":"de_dust2","playedAt":"2026-08-15T19:27:09Z","won":null,"scoreSelf":null,"scoreEnemy":null,"kills":25,"deaths":20,"adr":96.67,"kdRatio":1.25},{"matchId":14,"publicToken":null,"mapName":"de_dust2","playedAt":"2026-08-15T18:50:34Z","won":null,"scoreSelf":null,"scoreEnemy":null,"kills":18,"deaths":14,"adr":75.55,"kdRatio":1.29},{"matchId":13,"publicToken":null,"mapName":"de_mirage","playedAt":"2026-08-15T01:55:16Z","won":null,"scoreSelf":null,"scoreEnemy":null,"kills":24,"deaths":19,"adr":90.2,"kdRatio":1.26},{"matchId":12,"publicToken":null,"mapName":"de_dust2","playedAt":"2026-08-15T01:14:51Z","won":null,"scoreSelf":null,"scoreEnemy":null,"kills":11,"deaths":14,"adr":61.57,"kdRatio":0.79},{"matchId":11,"publicToken":null,"mapName":"de_mirage","playedAt":"2026-08-15T00:52:51Z","won":null,"scoreSelf":null,"scoreEnemy":null,"kills":5,"deaths":3,"adr":73.71,"kdRatio":1.67},{"matchId":10,"publicToken":null,"mapName":"de_inferno","playedAt":"2026-08-14T17:31:33Z","won":null,"scoreSelf":null,"scoreEnemy":null,"kills":19,"deaths":15,"adr":73.25,"kdRatio":1.27}]};
+
+const el = id => document.getElementById(id);
+const txt = s => { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; };
+
+/**
+ * Config das métricas do painel.
+ *
+ * Só as dez comparáveis aparecem aqui — são as que o backend
+ * agrega. As absolutas (kills, flashes lançadas) não fazem média
+ * entre partidas de tamanhos diferentes.
+ */
+const METRICAS = {
+  adr:                     {ordem:1, principal:true, rotulo:"ADR", fmt:v=>v.toFixed(1), icone:"dano"},
+  kdRatio:                 {ordem:2, principal:true, rotulo:"K/D", fmt:v=>v.toFixed(2), icone:"mira"},
+  headshotPercentage:      {ordem:1, principal:true, rotulo:"Headshot %", fmt:v=>v.toFixed(1)+"%", icone:"mira"},
+  killsPerRound:           {ordem:20, rotulo:"Kills / round", fmt:v=>v.toFixed(2), icone:"mira"},
+  deathsPerRound:          {ordem:21, rotulo:"Mortes / round", fmt:v=>v.toFixed(2), icone:"morte", dir:"menor"},
+  tradeKillsPerRound:      {rotulo:"Trades / round", fmt:v=>v.toFixed(2), icone:"duelo"},
+  openingDuelWinRate:      {ordem:11, rotulo:"Taxa 1º duelo", fmt:v=>v.toFixed(1)+"%", icone:"duelo"},
+  flashEfficiency:         {ordem:20, rotulo:"Eficiência de flash", fmt:v=>v.toFixed(1)+"%", icone:"granada"},
+  utilityDamagePerRound:   {ordem:30, rotulo:"Dano util. / round", fmt:v=>v.toFixed(1), icone:"dano"},
+  crosshairPlacementScore: {ordem:30, rotulo:"Crosshair placement", fmt:v=>v.toFixed(1)+"%", icone:"mira"},
+  closeRangeWinRate:       {ordem:1, principal:true, rotulo:"Duelos curtos", fmt:v=>v.toFixed(0)+"%", icone:"duelo"},
+  longRangeWinRate:        {ordem:2, principal:true, rotulo:"Duelos longos", fmt:v=>v.toFixed(0)+"%", icone:"duelo"},
+  earlyDeathRate:          {ordem:12, rotulo:"Mortes na entrada", fmt:v=>v.toFixed(0)+"%", icone:"relogio", dir:"menor"},
+};
+
+const cfg = k => METRICAS[k] || {rotulo:k, fmt:v=>v.toFixed(2), dir:"neutro"};
+
+/** Mesma zona morta relativa da página da partida. */
+const ZONA_MORTA = 0.05;
+
+function status(chave, valor) {
+  const ref = (DASH.mediasDaFaixa || {})[chave];
+  const dir = cfg(chave).dir || "maior";
+  if (dir === "neutro" || typeof ref !== "number") return "neutro";
+
+  const escala = Math.abs(ref) || 1;
+  const delta = (valor - ref) / escala;
+  if (Math.abs(delta) <= ZONA_MORTA) return "neutro";
+
+  const acima = delta > 0;
+  return (dir === "menor" ? !acima : acima) ? "acima" : "abaixo";
+}
+
+function renderCabecalho() {
+  el("nome").textContent = DASH.playerName || DASH.steamId64;
+
+  const obs = DASH.resultadoDesconhecido > 0
+    ? `<span class="obs">+${DASH.resultadoDesconhecido} sem resultado registrado</span>`
+    : "";
+  el("record").innerHTML =
+    `<span class="up">${DASH.vitorias}</span><span class="sep">V</span>` +
+    `<span class="down">${DASH.derrotas}</span><span class="sep">D</span>${obs}`;
+
+  const tag = (l, v, extra) =>
+    `<span class="tag${extra || ""}">${txt(l)} <b>${txt(v)}</b></span>`;
+  const bits = [tag("Partidas", DASH.partidasAnalisadas)];
+  if (DASH.rankTierLabel) {
+    bits.push(tag("Faixa", DASH.rankTierLabel, " is-tier" + classeTier(DASH.rankTier)));
+  }
+  el("meta").innerHTML = bits.join("");
+
+  if (DASH.csRating != null) {
+    el("rank").innerHTML =
+      `<div class="badge${classeTier(DASH.rankTier)}">` +
+      `<div><div class="n">${txt(DASH.csRating)}</div>` +
+      `<div class="t">${txt(nomeTier(DASH.rankTier) || "Rating")}</div></div></div>`;
+  }
+}
+
+function renderMedias() {
+  const medias = DASH.medias || {};
+  const chaves = Object.keys(METRICAS).filter(k => typeof medias[k] === "number");
+
+  el("mediasTitle").textContent =
+    `Médias das últimas ${DASH.partidasAnalisadas} partidas`;
+
+  if (!chaves.length) {
+    el("medias").innerHTML =
+      `<p class="hint">Nenhuma partida analisada ainda para este jogador.</p>`;
+    return;
+  }
+
+  // Principais primeiro, senão o span de duas colunas abre buracos.
+  // Principais primeiro; depois a ordem declarada, que põe o
+  // número bruto antes do derivado.
+  chaves.sort((a, b) => {
+    const ca = cfg(a), cb = cfg(b);
+    const pa = ca.principal ? 0 : 1, pb = cb.principal ? 0 : 1;
+    if (pa !== pb) return pa - pb;
+    return (ca.ordem ?? 50) - (cb.ordem ?? 50);
+  });
+
+  el("medias").innerHTML = `<div class="chips">` + chaves.map(k => {
+    const c = cfg(k);
+    return MetricCard({
+      label: c.rotulo,
+      valor: c.fmt(medias[k]),
+      icone: c.icone,
+      status: status(k, medias[k]),
+      principal: c.principal,
+    });
+  }).join("") + `</div>`;
+  Motion.entrar(el("medias"), ".chip");
+}
+
+/**
+ * Desempenho por mapa.
+ *
+ * Vitórias e derrotas em números absolutos, não em porcentagem:
+ * com duas partidas, "50%" sugere uma precisão que não existe, e
+ * "100%" vindo de uma única partida é pior ainda.
+ */
+function renderMapas() {
+  const mapas = DASH.porMapa || [];
+
+  el("mapasTitle").textContent =
+    `Por mapa — últimas ${DASH.partidasAnalisadas} partidas`;
+
+  if (!mapas.length) {
+    el("mapas").innerHTML =
+      `<p class="hint">Nenhuma partida analisada ainda.</p>`;
+    return;
+  }
+
+  const linhas = mapas.map(m => {
+    const kd = typeof m.kdRatio === "number" ? m.kdRatio.toFixed(2) : "—";
+    const adr = typeof m.adr === "number" ? m.adr.toFixed(1) : "—";
+
+    // A cor da linha segue o saldo, não a taxa: com poucas
+    // partidas o saldo é o que dá para afirmar.
+    const cls = m.vitorias > m.derrotas ? "is-win"
+              : (m.derrotas > m.vitorias ? "is-loss" : "");
+
+    const obs = m.resultadoDesconhecido > 0
+      ? ` <span class="dim">(+${m.resultadoDesconhecido} sem resultado)</span>`
+      : "";
+
+    return `<tr class="${cls}">
+        <td>${txt(m.mapName)}</td>
+        <td>${m.partidas}</td>
+        <td><span class="up">${m.vitorias}</span><span class="dim">-</span><span class="down">${m.derrotas}</span>${obs}</td>
+        <td>${txt(kd)}</td>
+        <td>${txt(adr)}</td>
+      </tr>`;
+  }).join("");
+
+  el("mapas").innerHTML = `<div class="scroll"><table class="mapas">
+      <thead><tr>
+        <th scope="col">Mapa</th>
+        <th scope="col">Partidas</th>
+        <th scope="col">V-D</th>
+        <th scope="col">K/D</th>
+        <th scope="col">ADR</th>
+      </tr></thead>
+      <tbody>${linhas}</tbody>
+    </table></div>`;
+  Motion.entrar(el("mapas"), "tbody tr");
+}
+
+function renderPartidas() {
+  const tb = el("rows");
+  tb.innerHTML = "";
+
+  (DASH.partidas || []).forEach(p => {
+    const tr = document.createElement("tr");
+    tr.className = p.won === true ? "is-win" : (p.won === false ? "is-loss" : "");
+
+    const placar = (p.scoreSelf != null && p.scoreEnemy != null)
+      ? `${p.scoreSelf}-${p.scoreEnemy}` : "—";
+    const rotulo = p.won === true ? "Vitória"
+                 : (p.won === false ? "Derrota" : "—");
+    const cor = p.won === true ? "up" : (p.won === false ? "down" : "dim");
+    const quando = p.playedAt
+      ? new Date(p.playedAt).toLocaleDateString("pt-BR") : "";
+
+    const kd = typeof p.kdRatio === "number" ? p.kdRatio.toFixed(2) : "—";
+    const adr = typeof p.adr === "number" ? p.adr.toFixed(1) : "—";
+
+    tr.innerHTML =
+      `<td class="${cor}">${txt(rotulo)} ${txt(placar)}</td>` +
+      `<td>${p.publicToken
+            ? `<a href="/demo/countatic/m/${encodeURIComponent(p.publicToken)}">${txt(p.mapName)}</a>`
+            : txt(p.mapName)}</td>` +
+      `<td>${p.kills ?? "—"}</td><td>${p.deaths ?? "—"}</td>` +
+      `<td>${txt(kd)}</td><td>${txt(adr)}</td>` +
+      `<td class="dim">${txt(quando)}</td>`;
+
+    tb.appendChild(tr);
+  });
+
+  Motion.entrar(tb, "tr");
+}
+
+// ─── Evolução ────────────────────────────────────────────
+const TENDENCIAS = ["adr", "kdRatio", "headshotPercentage", "longRangeWinRate"];
+let metricaAtual = TENDENCIAS[0];
+
+function renderTendencia() {
+  el("trendTabs").innerHTML = TENDENCIAS.map(k =>
+    `<button type="button" class="btn" data-metrica="${k}"
+             aria-pressed="${k === metricaAtual}">${txt(cfg(k).rotulo)}</button>`
+  ).join("");
+
+  el("trendTabs").querySelectorAll("button").forEach(b => {
+    b.onclick = () => { metricaAtual = b.dataset.metrica; renderTendencia(); };
+  });
+
+  carregarSerie(DASH.steamId64, metricaAtual);
+}
+
+async function carregarSerie(steamId, metrica) {
+  const alvo = el("trend");
+  alvo.innerHTML = `<p class="hint">Carregando…</p>`;
+
+  const pedido = steamId + "|" + metrica;
+  alvo.dataset.pedido = pedido;
+
+  try {
+    const r = await fetch(`/api/players/${encodeURIComponent(steamId)}/trend`
+                        + `?metric=${encodeURIComponent(metrica)}&limit=20`);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const serie = await r.json();
+
+    if (alvo.dataset.pedido !== pedido) return;
+    alvo.innerHTML = TrendChart(serie);
+    ativarTooltip(alvo);
+  } catch (e) {
+    if (alvo.dataset.pedido !== pedido) return;
+    alvo.innerHTML = `<p class="hint">Não foi possível carregar a evolução agora.</p>`;
+  }
+}
+
+oferecerVoltaAPartida();
+
+Motion.revelar(".panel");
+
+renderCabecalho();
+renderMedias();
+renderMapas();
+renderPartidas();
+renderTendencia();
+</script>
+</body>
+</html>

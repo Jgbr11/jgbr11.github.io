@@ -10,7 +10,7 @@ galeria:
   - { src: /projetos/countatic/partidas.webp, alt: "Histórico de partidas analisadas, com resultado, mapa, K/D e ADR" }
   - { src: /projetos/countatic/entrada.webp, alt: "Página inicial do CounTatic com login pela Steam" }
 stack: [Java 21, Spring Boot 3, Go, Node.js, TypeScript, MySQL, Docker]
-links: {}
+links: { demo: /demo/countatic/ }
 numeros:
   - { valor: "3", rotulo: "serviços em Docker" }
   - { valor: "~280", rotulo: "testes automatizados" }

@@ -10,12 +10,12 @@ export interface Resultado { linhas: string[]; efeitos: Efeito[]; cwd: Pasta }
 
 const COMANDOS = ['help', 'whoami', 'ls', 'cd', 'cat', 'open', 'contato', 'rapido', 'history', 'clear'];
 const PASTAS = ['projetos', 'trajetoria', 'certificados'] as const;
-const ARQUIVOS_RAIZ = ['sobre.txt', 'curriculo.pdf', 'contato.exe', 'neon-burnout.exe'];
+const ARQUIVOS_RAIZ = ['sobre.txt', 'curriculo.pdf', 'contato.exe', 'neon-burnout.exe', 'countatic.exe'];
 const APPS_POR_NOME: Record<string, AppId> = {
   sobre: 'sobre', projetos: 'projetos', trajetoria: 'trajetoria', certificados: 'certificados',
   curriculo: 'curriculo', contato: 'contato', terminal: 'terminal', jogo: 'neon-burnout',
 };
-const PROGRAMAS: Record<string, AppId> = { 'contato.exe': 'contato', 'neon-burnout.exe': 'neon-burnout' };
+const PROGRAMAS: Record<string, AppId> = { 'contato.exe': 'contato', 'neon-burnout.exe': 'neon-burnout', 'countatic.exe': 'demo-countatic' };
 
 const AJUDA = [
   'comandos disponíveis:',
@@ -179,6 +179,6 @@ export function completar(entrada: string, ctx: ContextoTerminal): string {
   let candidatos: string[] = [];
   if (cmd === 'cd' || cmd === 'ls') candidatos = ctx.cwd === '/' ? PASTAS.map((p) => `${p}/`) : ['..'];
   else if (cmd === 'cat') candidatos = ARQUIVOS_RAIZ;
-  else if (cmd === 'open') candidatos = [...ctx.projetos.map((p) => p.slug), ...Object.keys(APPS_POR_NOME)];
+  else if (cmd === 'open') candidatos = [...ctx.projetos.map((p) => p.slug), ...Object.keys(APPS_POR_NOME), 'countatic.exe'];
   return aplicar(antes, parcial, candidatos);
 }

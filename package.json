@@ -12,7 +12,8 @@
     "imagens": "node scripts/otimizar-imagens.ts",
     "og": "node scripts/gerar-og.ts",
     "curriculo": "node scripts/gerar-curriculo.ts",
-    "lighthouse": "node scripts/lighthouse.ts"
+    "lighthouse": "node scripts/lighthouse.ts",
+    "demo:countatic": "node scripts/demo-countatic.ts"
   },
   "dependencies": {
     "@astrojs/react": "^7.1.2",

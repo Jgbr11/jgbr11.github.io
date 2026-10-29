@@ -37,7 +37,7 @@ describe('básico', () => {
 
 describe('arquivos e pastas', () => {
   it('ls na raiz', () => {
-    expect(rodar('ls').linhas).toEqual(['projetos/', 'trajetoria/', 'certificados/', 'sobre.txt', 'curriculo.pdf', 'contato.exe', 'neon-burnout.exe']);
+    expect(rodar('ls').linhas).toEqual(['projetos/', 'trajetoria/', 'certificados/', 'sobre.txt', 'curriculo.pdf', 'contato.exe', 'neon-burnout.exe', 'countatic.exe']);
   });
   it('ls projetos lista os slugs', () => {
     expect(rodar('ls projetos').linhas).toEqual(['countatic/', 'smartscale/', 'neon-burnout/', 'controle-financeiro/']);
@@ -88,6 +88,10 @@ describe('open', () => {
     expect(rodar('open neon-burnout.exe').efeitos).toEqual([{ tipo: 'abrir', rota: { app: 'neon-burnout' } }]);
     expect(rodar('open jogo').efeitos).toEqual([{ tipo: 'abrir', rota: { app: 'neon-burnout' } }]);
     expect(rodar('open neon-burnout').efeitos).toEqual([{ tipo: 'abrir', rota: { app: 'projeto', param: 'neon-burnout' } }]);
+  });
+  it('countatic.exe abre a demo; countatic continua abrindo o estudo de caso', () => {
+    expect(rodar('open countatic.exe').efeitos).toEqual([{ tipo: 'abrir', rota: { app: 'demo-countatic' } }]);
+    expect(rodar('open countatic').efeitos).toEqual([{ tipo: 'abrir', rota: { app: 'projeto', param: 'countatic' } }]);
   });
   it('erros do open', () => {
     expect(rodar('open').linhas).toEqual(['uso: open <app|projeto>']);
@@ -140,7 +144,8 @@ describe('completar', () => {
     expect(completar('h', ctx())).toBe('h');
   });
   it('completa argumentos', () => {
-    expect(completar('open coun', ctx())).toBe('open countatic ');
+    expect(completar('open coun', ctx())).toBe('open countatic');
+    expect(completar('open countatic.e', ctx())).toBe('open countatic.exe ');
     expect(completar('open co', ctx())).toBe('open co');
     expect(completar('open contr', ctx())).toBe('open controle-financeiro ');
     expect(completar('cd pro', ctx())).toBe('cd projetos/');

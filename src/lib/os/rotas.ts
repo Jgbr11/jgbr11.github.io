@@ -5,6 +5,7 @@ export interface ResultadoRota { rota: Rota | null; aviso?: string }
 const SEGMENTOS: Record<string, AppId> = {
   sobre: 'sobre', projetos: 'projetos', trajetoria: 'trajetoria', certificados: 'certificados',
   curriculo: 'curriculo', contato: 'contato', terminal: 'terminal', 'neon-burnout': 'neon-burnout',
+  'demo-countatic': 'demo-countatic',
 };
 
 export function lerHash(hash: string, slugs: readonly string[]): ResultadoRota {

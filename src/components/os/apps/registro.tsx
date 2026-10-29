@@ -12,6 +12,7 @@ import { AppCurriculo } from './AppCurriculo';
 import { AppContato } from './AppContato';
 import { AppTerminal } from './AppTerminal';
 import { AppNeonBurnout } from './AppNeonBurnout';
+import { AppDemoCountatic } from './AppDemoCountatic';
 
 export interface PropsApp { dados: DadosOS; param?: string; abrir: (rota: Rota) => void }
 
@@ -42,6 +43,7 @@ export const APPS: Partial<Record<AppId, DefinicaoApp>> = {
   contato: { id: 'contato', rotulo: 'contato.exe', icone: 'exe', tamanho: { w: 480, h: 320 }, titulo: fixo('contato.exe'), caminho: fixo('C:\\JGBR11\\CONTATO.EXE'), Componente: AppContato },
   terminal: { id: 'terminal', rotulo: 'terminal', icone: 'terminal', tamanho: { w: 660, h: 420 }, titulo: fixo('terminal'), caminho: fixo('C:\\JGBR11\\TERMINAL.EXE'), Componente: AppTerminal },
   'neon-burnout': { id: 'neon-burnout', rotulo: 'neon-burnout.exe', icone: 'jogo', tamanho: { w: 820, h: 640 }, titulo: fixo('neon-burnout.exe'), caminho: fixo('C:\\JGBR11\\JOGOS\\NEON-BURNOUT.EXE'), Componente: AppNeonBurnout },
+  'demo-countatic': { id: 'demo-countatic', rotulo: 'countatic.exe', icone: 'exe', tamanho: { w: 1100, h: 720 }, titulo: fixo('countatic.exe'), caminho: fixo('C:\\JGBR11\\PROJETOS\\COUNTATIC\\DEMO.EXE'), Componente: AppDemoCountatic },
 };
 
 /** Ordem dos ícones na área de trabalho, no START e na tela do celular. */

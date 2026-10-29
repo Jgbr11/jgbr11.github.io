@@ -81,7 +81,7 @@
 .terminal:focus-within { box-shadow: inset 0 0 0 1px var(--c); }
 .matrix { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-.janela__corpo:has(> .app-jogo) { padding: 0; }
+.janela__corpo:has(> .app-jogo), .janela__corpo:has(> .app-demo) { padding: 0; }
 .app-jogo { height: 100%; display: flex; flex-direction: column; background: var(--k); }
 .app-jogo iframe { flex: 1; width: 100%; min-height: 360px; border: 0; }
 .app-jogo__capa { flex: 1; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 24px;
@@ -90,6 +90,9 @@
 .app-jogo__titulo { font: 700 2rem var(--fonte-titulo); color: var(--y); text-shadow: 0 0 16px rgba(243, 230, 0, .35); }
 .app-jogo__nota { font: .72rem var(--fonte-mono); color: var(--t2); }
 .app-jogo .app-acoes { padding: 0 12px 12px; }
+.app-demo { height: 100%; display: flex; flex-direction: column; background: var(--k); }
+.app-demo iframe { flex: 1; width: 100%; min-height: 360px; border: 0; background: var(--k); }
+.app-demo .app-acoes { margin: 0; padding: 8px 12px; }
 .terminal__arte > span { display: inline-block; width: 1ch; overflow: hidden; vertical-align: bottom; }
 
 /* ---------- Celular ---------- */
@@ -113,7 +116,7 @@
 .cel-app__barra button { font: 700 .75rem var(--fonte-mono); color: var(--k); background: var(--y); padding: 8px 12px; clip-path: var(--corte-p); }
 .cel-app__titulo { font: 700 .8rem var(--fonte-mono); color: var(--y); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cel-app__corpo { flex: 1; min-height: 0; overflow: auto; padding: 16px; }
-.cel-app__corpo:has(> .terminal), .cel-app__corpo:has(> .app-jogo) { padding: 0; }
+.cel-app__corpo:has(> .terminal), .cel-app__corpo:has(> .app-jogo), .cel-app__corpo:has(> .app-demo) { padding: 0; }
 .os-aviso--cel { position: static; transform: none; margin-bottom: 12px; }
 .cel-app .diagrama { min-width: 0; }
 

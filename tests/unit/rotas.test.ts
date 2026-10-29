@@ -12,7 +12,7 @@ describe('lerHash', () => {
   it.each([
     ['#/sobre', 'sobre'], ['#/projetos', 'projetos'], ['#/trajetoria', 'trajetoria'],
     ['#/certificados', 'certificados'], ['#/curriculo', 'curriculo'], ['#/contato', 'contato'],
-    ['#/terminal', 'terminal'], ['#/neon-burnout', 'neon-burnout'],
+    ['#/terminal', 'terminal'], ['#/neon-burnout', 'neon-burnout'], ['#/demo-countatic', 'demo-countatic'],
   ])('%s abre %s', (hash, app) => {
     expect(lerHash(hash, slugs)).toEqual({ rota: { app } });
   });
