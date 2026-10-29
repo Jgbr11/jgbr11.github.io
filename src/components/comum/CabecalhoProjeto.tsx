@@ -5,7 +5,14 @@ export function CabecalhoProjeto({ projeto, nivel = 'h2' }: { projeto: Projeto; 
   return (
     <header className="projeto-cab">
       {projeto.capa ? (
-        <img className="projeto-cab__capa" src={projeto.capa.src} alt={projeto.capa.alt} width={projeto.capa.largura} height={projeto.capa.altura} loading="eager" decoding="async" />
+        projeto.links.demo ? (
+          <a className="projeto-cab__capa-link" href={projeto.links.demo} target="_blank" rel="noopener" aria-label={`Abrir demo ao vivo do ${projeto.titulo}`}>
+            <img className="projeto-cab__capa" src={projeto.capa.src} alt={projeto.capa.alt} width={projeto.capa.largura} height={projeto.capa.altura} loading="eager" decoding="async" />
+            <span className="projeto-cab__selo" aria-hidden="true">▶ ABRIR DEMO AO VIVO</span>
+          </a>
+        ) : (
+          <img className="projeto-cab__capa" src={projeto.capa.src} alt={projeto.capa.alt} width={projeto.capa.largura} height={projeto.capa.altura} loading="eager" decoding="async" />
+        )
       ) : (
         <div className="projeto-cab__capa projeto-cab__capa--vazia" aria-hidden="true">
           <span>{projeto.titulo}</span>

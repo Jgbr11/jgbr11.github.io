@@ -1,4 +1,4 @@
-export type TipoIcone = 'pasta' | 'texto' | 'pdf' | 'exe' | 'terminal' | 'jogo';
+export type TipoIcone = 'pasta' | 'texto' | 'pdf' | 'exe' | 'terminal' | 'jogo' | 'mira';
 
 const K = '#0d0d0d', Y = '#f3e600', C = '#02d7f2', R = '#ff3b4e';
 
@@ -56,6 +56,16 @@ export function Icone({ tipo, selecionado = false }: { tipo: TipoIcone; selecion
           <path d="M11 24h10M16 19v10" stroke={Y} strokeWidth="3" />
           <circle cx="33" cy="21" r="2.5" fill={C} />
           <circle cx="38" cy="27" r="2.5" fill={C} />
+        </svg>
+      );
+    case 'mira':
+      return (
+        <svg aria-hidden="true" width="50" height="46" viewBox="0 0 50 46">
+          <rect x="2" y="4" width="46" height="38" fill={K} />
+          <rect x="2" y="4" width="46" height="7" fill={C} />
+          <circle cx="25" cy="27" r="9" fill="none" stroke={Y} strokeWidth="2" />
+          <path d="M25 14v7M25 33v7M12 27h7M31 27h7" stroke={Y} strokeWidth="2" />
+          <circle cx="25" cy="27" r="1.8" fill={Y} />
         </svg>
       );
   }

@@ -43,7 +43,7 @@ describe('CabecalhoProjeto', () => {
 });
 
 describe('Icone', () => {
-  it.each(['pasta', 'texto', 'pdf', 'exe', 'terminal', 'jogo'] as const)('desenha %s como SVG decorativo', (tipo) => {
+  it.each(['pasta', 'texto', 'pdf', 'exe', 'terminal', 'jogo', 'mira'] as const)('desenha %s como SVG decorativo', (tipo) => {
     const html = renderToStaticMarkup(<Icone tipo={tipo} />);
     expect(html).toMatch(/^<svg/);
     expect(html).toContain('aria-hidden="true"');

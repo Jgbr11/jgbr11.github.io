@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }, info) => {
 test('tela inicial com crachá, apps e dock', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('region', { name: 'Crachá de identidade' })).toContainText('ONLINE');
-  for (const nome of ['Projetos', 'Sobre', 'Trajetória', 'Currículo', 'Certificados', 'Contato', 'Terminal', 'Jogar']) {
+  for (const nome of ['Projetos', 'Sobre', 'Trajetória', 'Currículo', 'Certificados', 'Contato', 'Terminal', 'Jogar', 'Demo CS2']) {
     await expect(page.getByRole('button', { name: `Abrir ${nome}`, exact: true })).toBeVisible();
   }
   await expect(page.getByRole('link', { name: /RÁPIDO/ })).toHaveAttribute('href', '/rapido/');

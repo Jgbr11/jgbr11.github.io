@@ -46,7 +46,7 @@ const projetos = await carregarProjetos();
             {p.capa
               ? <img src={p.capa.src} alt={p.capa.alt} width={p.capa.largura} height={p.capa.altura} loading="lazy" />
               : <div class="projeto-cab__capa projeto-cab__capa--vazia" aria-hidden="true"><span>{p.titulo}</span></div>}
-            <h3>{p.titulo}</h3>
+            <h3>{p.titulo}{p.links.demo && <em class="selo-demo">DEMO AO VIVO</em>}</h3>
             <p>{p.resumo}</p>
             <ul class="chips">{p.stack.slice(0, 4).map((s) => <li class="chip">{s}</li>)}</ul>
             <span class="r-mais">ESTUDO DE CASO ▸</span>

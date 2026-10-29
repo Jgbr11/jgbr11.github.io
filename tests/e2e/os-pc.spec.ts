@@ -16,7 +16,7 @@ test('duplo clique abre a pasta e o projeto, e o hash acompanha', async ({ page 
   await page.goto('/');
   await page.getByRole('button', { name: 'Abrir projetos/', exact: true }).dblclick();
   await expect(page.getByRole('dialog', { name: 'projetos/' })).toBeVisible();
-  await page.getByRole('button', { name: 'Abrir CounTatic' }).click();
+  await page.getByRole('button', { name: 'Abrir CounTatic', exact: true }).click();
   const janela = page.getByRole('dialog', { name: 'CounTatic' });
   await expect(janela.getByRole('heading', { name: 'Decisões técnicas' })).toBeVisible();
   await expect(page).toHaveURL(/#\/projetos\/countatic$/);

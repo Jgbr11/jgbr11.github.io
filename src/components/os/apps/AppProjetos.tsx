@@ -8,7 +8,7 @@ export function AppProjetos({ dados, abrir }: PropsApp) {
         <li key={p.slug}>
           <button type="button" className="app-lista__item" aria-label={`Abrir ${p.titulo}`} onClick={() => abrir({ app: 'projeto', param: p.slug })}>
             <Icone tipo="pasta" />
-            <strong>{p.titulo}</strong>
+            <strong>{p.titulo}{p.links.demo && <em className="selo-demo">DEMO AO VIVO</em>}</strong>
             <span>// {p.subtitulo}</span>
             <span>{p.stack.slice(0, 4).join(' · ')}</span>
           </button>

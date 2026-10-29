@@ -7,7 +7,7 @@ import { Icone } from '../../comum/Icone';
 
 const NOMES: Partial<Record<AppId, string>> = {
   projetos: 'Projetos', sobre: 'Sobre', trajetoria: 'Trajetória', curriculo: 'Currículo',
-  certificados: 'Certificados', contato: 'Contato', terminal: 'Terminal', 'neon-burnout': 'Jogar',
+  certificados: 'Certificados', contato: 'Contato', terminal: 'Terminal', 'neon-burnout': 'Jogar', 'demo-countatic': 'Demo CS2',
 };
 
 function horaAgora(): string {

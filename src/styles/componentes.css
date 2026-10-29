@@ -79,3 +79,12 @@
 /* Galeria de prints dos projetos (modo rápido, páginas de projeto e janelas do OS) */
 .p-galeria figure { margin: 0; }
 .p-galeria img { width: 100%; background: var(--k3); }
+
+/* Capa clicável (demo) */
+.projeto-cab__capa-link { position: relative; display: block; }
+.projeto-cab__capa-link:focus-visible { outline: 3px solid var(--c); outline-offset: 3px; }
+.projeto-cab__selo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); white-space: nowrap; font: 700 .9rem var(--fonte-mono);
+  letter-spacing: .04em; padding: .8em 1.3em; background: #f3e600; color: #0d0d0d; clip-path: var(--corte-p); box-shadow: 0 0 24px rgba(0, 0, 0, .6); }
+.projeto-cab__capa-link:hover .projeto-cab__selo { background: #fff; }
+.selo-demo { display: inline-block; margin-left: .6em; vertical-align: middle; font: 700 .62rem var(--fonte-mono); font-style: normal; letter-spacing: .05em;
+  padding: 2px 7px; color: #fff; background: transparent; border: 1px solid var(--y); }
